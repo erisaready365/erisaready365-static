@@ -1,8 +1,14 @@
 /* ============================================================
    er365-nav-items.js
    ERISAReady365 header — nav configuration
-   Version: 3.0 (2026-07-21)
+   Version: 3.1 (2026-07-21)
    ------------------------------------------------------------
+   CHANGES v3.1:
+     - Added openIn field to avatar items:
+         'modal'  — My Account, Security, Notifications (iframe overlay)
+         'newtab' — SOC Academy, Tutorials, FAQs, all Support items
+       (destinations are chromeless AppPages, no header injected)
+
    CHANGES v3.0:
      - Renamed Contribution/Distribution/Loan Management
        → Contribution/Distribution/Loan Reconciliation
@@ -99,22 +105,25 @@
   ];
 
   // Avatar dropdown — plan-agnostic, same for every user
+  // openIn: 'modal' launches an iframe overlay on top of current page
+  // openIn: 'newtab' calls window.open(url, '_blank')
+  // openIn absent (or 'same') = normal in-page navigation
   var AVATAR_MENU = [
     { section: 'My Account', items: [
-      { id: 'my-account',    label: 'My Account',    url: BASE + 'my-account' },
-      { id: 'security',      label: 'Security',      url: BASE + 'security' },
-      { id: 'notifications', label: 'Notifications', url: BASE + 'notifications', badge: 'red-dot-on-urgent' }
+      { id: 'my-account',    label: 'My Account',    url: BASE + 'my-account',    openIn: 'modal' },
+      { id: 'security',      label: 'Security',      url: BASE + 'security',      openIn: 'modal' },
+      { id: 'notifications', label: 'Notifications', url: BASE + 'notifications', openIn: 'modal', badge: 'red-dot-on-urgent' }
     ]},
     { section: 'Learning Center', items: [
-      { id: 'standards-of-care-soc-academy', label: 'Standards of Care (SOC) Academy', url: BASE + 'standards-of-care-soc-academy' },
-      { id: 'erisa365-tutorials',            label: 'ERISA365 Tutorials',              url: BASE + 'erisa365-tutorials' },
-      { id: 'faqs',                          label: 'FAQs',                            url: BASE + 'faqs' }
+      { id: 'standards-of-care-soc-academy', label: 'Standards of Care (SOC) Academy', url: BASE + 'standards-of-care-soc-academy', openIn: 'newtab' },
+      { id: 'erisa365-tutorials',            label: 'ERISA365 Tutorials',              url: BASE + 'erisa365-tutorials',            openIn: 'newtab' },
+      { id: 'faqs',                          label: 'FAQs',                            url: BASE + 'faqs',                          openIn: 'newtab' }
     ]},
     { section: 'Support', items: [
-      { id: 'support-tickets',  label: 'Support Tickets',  url: BASE + 'support-tickets' },
-      { id: 'contact-support',  label: 'Contact Support',  url: BASE + 'contact-support' },
-      { id: 'community-forum',  label: 'Community Forum',  url: BASE + 'community-forum' },
-      { id: 'feature-requests', label: 'Feature Requests', url: BASE + 'feature-requests' }
+      { id: 'support-tickets',  label: 'Support Tickets',  url: BASE + 'support-tickets',  openIn: 'newtab' },
+      { id: 'contact-support',  label: 'Contact Support',  url: BASE + 'contact-support',  openIn: 'newtab' },
+      { id: 'community-forum',  label: 'Community Forum',  url: BASE + 'community-forum',  openIn: 'newtab' },
+      { id: 'feature-requests', label: 'Feature Requests', url: BASE + 'feature-requests', openIn: 'newtab' }
     ]}
   ];
 
@@ -149,7 +158,7 @@
 
   // Expose to global for er365-header.js to consume
   window.ER365_NAV = {
-    version: '3.0',
+    version: '3.1',
     base: BASE,
     items: NAV_ITEMS,
     avatar: AVATAR_MENU,
