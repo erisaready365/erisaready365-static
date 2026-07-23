@@ -1,7 +1,32 @@
-/* er365-header.js v4.1 */
+/* er365-header.js v4.4 */
 /**
- * ERISAReady365 Header Component (v4.1)
+ * ERISAReady365 Header Component (v4.4)
  * =====================================
+ *
+ * v4.4 CHANGES (2026-07-21) — MOBILE HEADER FIX (Plan context too):
+ *   - Plan context also keeps welcome + company visible at narrow
+ *     widths. Once the full nav collapses to the hamburger, there
+ *     is plenty of space. Both contexts now behave the same: left
+ *     group wraps if space is tight, separators drop on <420px.
+ *
+ * v4.3 CHANGES (2026-07-21) — MOBILE HEADER FIX (Home context):
+ *   - Home context (no nav items) keeps welcome + company visible
+ *     at all viewport widths. Previously the mobile breakpoint
+ *     hid them across the board — necessary when 10 nav parents
+ *     were competing for space, unnecessary (and confusing) when
+ *     the header only has logo + welcome + avatar.
+ *   - Header now gets class 'er365-hdr-no-nav' when visibleNavItems
+ *     is empty; media queries scope hide/show accordingly.
+ *
+ * v4.2 CHANGES (2026-07-21) — AVATAR ITEM OPEN MODES:
+ *   - Avatar items honor an `openIn` field on each item:
+ *       'modal'  — iframe overlay on top of current page
+ *                  (backdrop, X close, Escape key, click-outside)
+ *       'newtab' — window.open(url, '_blank')
+ *       absent   — normal in-page navigation (current behavior)
+ *   - Modal listens for postMessage {type:'er365-close-modal'}
+ *     from child iframe (destination page can self-close on save)
+ *   - Default logo URL updated to .webp version
  *
  * v4.1 CHANGES (2026-07-21) — CONTEXT FILTERING:
  *   - Reads window.ER365_CONTEXT ('home' | 'plan') and filters nav accordingly
@@ -45,7 +70,7 @@
 (function () {
   'use strict';
 
-  try { console.log('%c[ER365] Header v4.0 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
+  try { console.log('%c[ER365] Header v4.4 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
 
   // ---------------------------------------------------------
   // CONFIGURATION
@@ -55,7 +80,7 @@
 
   var LOGO_URL =
     CFG.logoUrl ||
-    'https://erisaready365.com/wp-content/uploads/2026/07/ERISAReady-365-ICON-no-background.png';
+    'https://erisaready365.com/wp-content/uploads/2026/07/b3413c3f036b4543a77afe74801e0604.webp';
 
   var LOGOUT_URL = CFG.logoutUrl || '/users/x202vq/logout';
   var PROFILE_PAGE = CFG.profilePage || 'my-account';
@@ -216,11 +241,51 @@
     '.er365-hdr-btn-primary { background: #002855; color: #ffffff; }',
     '.er365-hdr-btn-secondary { background: #eef2f6; color: #002855; }',
     '.er365-hdr-btn-danger { background: #b0392f; color: #ffffff; }',
+    // ---------- Iframe modal (v4.2) ----------
+    '.er365-hdr-modal-backdrop {',
+    '  position: fixed; inset: 0; background: rgba(0, 40, 85, 0.55);',
+    '  z-index: 20000; display: none; align-items: center; justify-content: center;',
+    '  animation: er365-modal-fade 0.18s ease-out;',
+    '}',
+    '.er365-hdr-modal-backdrop.er365-hdr-modal-open { display: flex; }',
+    '@keyframes er365-modal-fade { from{opacity:0} to{opacity:1} }',
+    '.er365-hdr-modal {',
+    '  position: relative; background: #ffffff; border-radius: 10px;',
+    '  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.30);',
+    '  width: 90vw; max-width: 900px; height: 85vh; max-height: 720px;',
+    '  display: flex; flex-direction: column; overflow: hidden;',
+    '  animation: er365-modal-pop 0.22s ease-out;',
+    '}',
+    '@keyframes er365-modal-pop { from{transform:scale(0.96);opacity:0} to{transform:scale(1);opacity:1} }',
+    '.er365-hdr-modal-header {',
+    '  display: flex; align-items: center; justify-content: space-between;',
+    '  padding: 12px 20px; border-bottom: 1px solid #eef2f6; background: #f7f9fc;',
+    '  flex-shrink: 0;',
+    '}',
+    '.er365-hdr-modal-title { color: #002855; font-weight: 600; font-size: 15px; }',
+    '.er365-hdr-modal-close {',
+    '  background: none; border: none; font-size: 22px; cursor: pointer;',
+    '  color: #666; padding: 4px 12px; border-radius: 4px;',
+    '  line-height: 1;',
+    '}',
+    '.er365-hdr-modal-close:hover { background: #eef2f6; color: #b0392f; }',
+    '.er365-hdr-modal-iframe {',
+    '  flex: 1; border: none; width: 100%; height: 100%;',
+    '  background: #ffffff;',
+    '}',
+    '@media (max-width: 600px) {',
+    '  .er365-hdr-modal { width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0; }',
+    '}',
     '@media (max-width: ' + (MOBILE_BREAKPOINT_PX - 1) + 'px) {',
     '  #er365-header { padding: 14px 20px; min-height: 78px; }',
     '  .er365-hdr-logo img { height: 52px; }',
     '  .er365-hdr-nav { display: none; }',
-    '  .er365-hdr-welcome, .er365-hdr-company, .er365-hdr-sep { display: none; }',
+    // Both contexts keep welcome + company visible. The full nav has already
+    // collapsed to the hamburger, so there is plenty of room.
+    '  .er365-hdr-left {',
+    '    flex-wrap: wrap; white-space: normal; min-width: 0; row-gap: 4px;',
+    '  }',
+    '  .er365-hdr-welcome, .er365-hdr-company { white-space: normal; }',
     '  .er365-hdr-hamburger { display: block; }',
     '  .er365-hdr-avatar { width: 40px; height: 40px; font-size: 14px; }',
     '  .er365-hdr-right { gap: 14px; }',
@@ -232,6 +297,9 @@
     '  .er365-hdr-hamburger { width: 40px; height: 40px; }',
     '  .er365-hdr-hamburger span { width: 22px; }',
     '  .er365-hdr-right { gap: 10px; }',
+    // Drop separators on very narrow screens to keep welcome text prominent
+    '  .er365-hdr-sep { display: none; }',
+    '  .er365-hdr-left { gap: 8px; }',
     '}'
   ].join('\n');
 
@@ -503,6 +571,8 @@
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
       var opening = !wrap.classList.contains('er365-hdr-open');
+      // Close hamburger overlay if open (avoid overlap)
+      if (opening) closeOverlay();
       wrap.classList.toggle('er365-hdr-open');
       if (opening) {
         var r = btn.getBoundingClientRect();
@@ -539,7 +609,7 @@
         a.addEventListener('click', function (e) {
           e.preventDefault();
           wrap.classList.remove('er365-hdr-open');
-          navigateTo(itemUrl(i));
+          openAvatarItem(i);
         });
         menu.appendChild(a);
       });
@@ -680,6 +750,10 @@
 
     // Only render hamburger if there ARE nav items (Home context has none)
     var visibleNavItems = filterByContext(navItems);
+    // Tag header for context-aware CSS (Home context keeps welcome/company visible)
+    if (visibleNavItems.length === 0) {
+      header.classList.add('er365-hdr-no-nav');
+    }
     if (visibleNavItems.length > 0) {
       var hamburger = document.createElement('button');
       hamburger.type = 'button';
@@ -716,6 +790,10 @@
   // ---------------------------------------------------------
 
   function openOverlay() {
+    // Close any avatar dropdowns / submenus first so they don't overlap
+    document.querySelectorAll('.er365-hdr-avatar-wrap.er365-hdr-open, .er365-hdr-nav-item.er365-hdr-open').forEach(function (el) {
+      el.classList.remove('er365-hdr-open');
+    });
     var overlay = document.querySelector('.er365-hdr-overlay');
     var backdrop = document.querySelector('.er365-hdr-backdrop');
     if (overlay) overlay.classList.add('er365-hdr-open');
@@ -726,6 +804,74 @@
     var backdrop = document.querySelector('.er365-hdr-backdrop');
     if (overlay) overlay.classList.remove('er365-hdr-open');
     if (backdrop) backdrop.classList.remove('er365-hdr-open');
+  }
+
+  // ---------------------------------------------------------
+  // Avatar item open modes: modal | newtab | in-page
+  // ---------------------------------------------------------
+
+  function openAvatarItem(item) {
+    var url = itemUrl(item);
+    if (!url) return;
+    if (item.openIn === 'modal')  return openModal(url, item.label);
+    if (item.openIn === 'newtab') return window.open(url, '_blank');
+    return navigateTo(url);
+  }
+
+  function openModal(url, title) {
+    // Absolutize relative URLs so iframe loads reliably
+    var absUrl = /^https?:\/\//i.test(url) ? url : (window.location.origin + (url.charAt(0)==='/'?'':'/') + url);
+
+    var backdrop = document.createElement('div');
+    backdrop.className = 'er365-hdr-modal-backdrop er365-hdr-modal-open';
+
+    var modal = document.createElement('div');
+    modal.className = 'er365-hdr-modal';
+
+    var header = document.createElement('div');
+    header.className = 'er365-hdr-modal-header';
+    var t = document.createElement('div');
+    t.className = 'er365-hdr-modal-title';
+    t.textContent = title || 'ERISAReady365';
+    header.appendChild(t);
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'er365-hdr-modal-close';
+    closeBtn.setAttribute('aria-label', 'Close');
+    closeBtn.innerHTML = '&times;';
+    header.appendChild(closeBtn);
+    modal.appendChild(header);
+
+    var iframe = document.createElement('iframe');
+    iframe.className = 'er365-hdr-modal-iframe';
+    iframe.setAttribute('title', title || 'ERISAReady365');
+    iframe.src = absUrl;
+    modal.appendChild(iframe);
+
+    backdrop.appendChild(modal);
+    document.body.appendChild(backdrop);
+    // Prevent background scroll while modal open
+    var prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    function cleanup() {
+      document.body.removeChild(backdrop);
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener('keydown', escHandler);
+      window.removeEventListener('message', msgHandler);
+    }
+    function escHandler(e) { if (e.key === 'Escape') cleanup(); }
+    function msgHandler(e) {
+      // Child iframe can self-close by posting { type: 'er365-close-modal' }
+      if (e && e.data && e.data.type === 'er365-close-modal') cleanup();
+    }
+
+    closeBtn.addEventListener('click', cleanup);
+    backdrop.addEventListener('click', function (e) {
+      // Only close when backdrop itself (not modal chrome) clicked
+      if (e.target === backdrop) cleanup();
+    });
+    document.addEventListener('keydown', escHandler);
+    window.addEventListener('message', msgHandler);
   }
 
   function navigateTo(pageOrUrl) {
