@@ -1,7 +1,41 @@
-/* er365-header.js v4.6 */
+/* er365-header.js v4.9 */
 /**
- * ERISAReady365 Header Component (v4.6)
+ * ERISAReady365 Header Component (v4.9)
  * =====================================
+ *
+ * v4.9 CHANGES (2026-07-21) — ACCORDION HAMBURGER OVERLAY:
+ *   - Overlay initially shows ONLY parent items (Home, Plan Dashboard,
+ *     My Work, Plan Profile, Providers, Committees, Compliance,
+ *     Participant Mgmt, Participant Comms, Plan Admin).
+ *   - Parents WITH children: click toggles child list. Chevron indicator
+ *     (▸ collapsed → ▾ expanded).
+ *   - Parents WITHOUT children (Home, Plan Dashboard): click navigates.
+ *   - Accordion pattern: only ONE parent expanded at a time. Opening one
+ *     collapses any other.
+ *   - Auto-expand: if current page matches a child, its parent expands
+ *     on load so the active item is visible.
+ *
+ * v4.8 CHANGES (2026-07-21) — HAMBURGER-ALWAYS + AVATAR-ALWAYS:
+ *   - The full desktop horizontal nav bar is GONE. Hamburger is the nav
+ *     entry point at ALL viewport widths, on ALL devices.
+ *   - Avatar circle also visible at ALL widths — no longer swallowed by
+ *     hamburger. Two separate buttons: hamburger (plan nav) + avatar
+ *     (account/learning/support/logout).
+ *   - Hamburger overlay reverts to plan-nav-only (no avatar sections,
+ *     no logout inside). Log Out stays in the avatar dropdown.
+ *   - Reason: combined menus were too long, and 10 nav parents caused
+ *     horizontal scroll bars on typical laptop widths. Uniform mobile-first
+ *     pattern removes all breakpoint sensitivity.
+ *   - Mobile breakpoint now controls only font/padding size, not layout.
+ *
+ * v4.7 CHANGES (2026-07-21) — WELCOME/COMPANY ALWAYS UNDER LOGO + WIDER BREAKPOINT:
+ *   - Welcome + company now sit under the logo at ALL widths (not just mobile).
+ *     Cleaner desktop layout. Nav gets more horizontal breathing room.
+ *   - Mobile breakpoint raised 1100px → 1500px because the 10-parent nav
+ *     needs more space than 1100 accounts for. Between 1100–1499px, users
+ *     were getting a horizontal scroll bar. Hamburger now kicks in sooner.
+ *   - James can override via window.ER365_CFG.mobileBreakpointPx if desired
+ *     (e.g., after cropping logo to icon-only, could lower to ~1300).
  *
  * v4.6 CHANGES (2026-07-21) — HAMBURGER SWALLOWS AVATAR ON MOBILE:
  *   - At ≤1099px: avatar circle hides. Hamburger overlay contains:
@@ -89,7 +123,7 @@
 (function () {
   'use strict';
 
-  try { console.log('%c[ER365] Header v4.6 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
+  try { console.log('%c[ER365] Header v4.9 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
 
   // ---------------------------------------------------------
   // CONFIGURATION
@@ -105,7 +139,7 @@
   var PROFILE_PAGE = CFG.profilePage || 'my-account';
   var ACCOUNT_PAGE = CFG.accountPage || 'my-account';
 
-  var MOBILE_BREAKPOINT_PX = CFG.mobileBreakpointPx || 1100;
+  var MOBILE_BREAKPOINT_PX = CFG.mobileBreakpointPx || 1500;
 
   var FORM_PAGE_MARKERS = CFG.formPageMarkers || [
     'fiduciary-navigator',
@@ -138,21 +172,27 @@
     '#er365-header {',
     '  position: sticky; top: 0; z-index: 9999;',
     '  display: flex; align-items: center;',
-    '  padding: 18px 40px; background: #ffffff;',
+    '  padding: 14px 40px; background: #ffffff;',
     '  border-bottom: 1px solid #e6ebf1;',
     '  font-family: Calibri, "Segoe UI", Arial, sans-serif;',
     '  font-size: 16px; color: #002855;',
-    '  min-height: 96px; box-sizing: border-box;',
+    '  min-height: 108px; box-sizing: border-box;',
     '}',
-    '.er365-hdr-left { display: flex; align-items: center; gap: 14px; white-space: nowrap; flex-shrink: 0; min-width: 0; }',
+    // v4.7: left column ALWAYS stacks — logo on top, user group (company + welcome) below
+    '.er365-hdr-left {',
+    '  display: flex; flex-direction: column; align-items: flex-start;',
+    '  gap: 6px; white-space: nowrap; flex-shrink: 0; min-width: 0;',
+    '}',
     '.er365-hdr-logo img { height: 66px; display: block; }',
+    '.er365-hdr-sep-primary { display: none; }',   // always hidden — row separator not shown between stacked rows
     '.er365-hdr-user { display: flex; align-items: center; gap: 14px; }',
     '.er365-hdr-sep { color: #b0b8c4; font-weight: 400; padding: 0 4px; }',
     '.er365-hdr-company { color: #002855; font-weight: 600; }',
     '.er365-hdr-welcome { color: #002855; font-weight: 400; }',
     '.er365-hdr-welcome strong { font-weight: 600; }',
-    '.er365-hdr-right { margin-left: auto; display: flex; align-items: center; gap: 26px; }',
-    '.er365-hdr-nav { display: flex; align-items: center; gap: 26px; }',
+    '.er365-hdr-right { margin-left: auto; display: flex; align-items: center; gap: 20px; }',
+    // v4.8: full desktop nav bar is permanently hidden — hamburger is the only entry point
+    '.er365-hdr-nav { display: none !important; }',
     '.er365-hdr-nav-item { position: relative; }',
     '.er365-hdr-nav a, .er365-hdr-nav button.er365-hdr-nav-parent {',
     '  color: #002855; text-decoration: none; background: none; border: none;',
@@ -208,8 +248,9 @@
     '.er365-hdr-avatar-menu a.er365-hdr-logout {',
     '  color: #b0392f; border-top: 1px solid #eef2f6; margin-top: 4px;',
     '}',
+    // v4.8: hamburger visible at ALL widths (was: only mobile)
     '.er365-hdr-hamburger {',
-    '  display: none; background: none; border: none; cursor: pointer;',
+    '  display: block; background: none; border: none; cursor: pointer;',
     '  width: 48px; height: 48px; padding: 0; border-radius: 6px; flex-shrink: 0;',
     '}',
     '.er365-hdr-hamburger:hover { background: #f0f4f9; }',
@@ -243,6 +284,37 @@
     '  border-left: 3px solid #4A7EDE; padding-left: 21px;',
     '}',
     '.er365-hdr-overlay li.er365-hdr-child a.er365-hdr-active { padding-left: 41px; }',
+    // v4.9: accordion chevron + collapsed child list
+    '.er365-hdr-overlay li.er365-hdr-parent {',
+    '  cursor: pointer;',
+    '}',
+    '.er365-hdr-overlay li.er365-hdr-parent > a {',
+    '  display: flex; align-items: center; justify-content: space-between;',
+    '}',
+    '.er365-hdr-overlay .er365-hdr-chevron {',
+    '  font-size: 12px; color: #7a8598; transition: transform 0.18s ease-out;',
+    '  margin-left: 12px; flex-shrink: 0;',
+    '}',
+    '.er365-hdr-overlay li.er365-hdr-parent.er365-hdr-expanded .er365-hdr-chevron {',
+    '  transform: rotate(90deg); color: #4A7EDE;',
+    '}',
+    '.er365-hdr-overlay li.er365-hdr-parent.er365-hdr-expanded > a {',
+    '  background: #f0f4f9; color: #4A7EDE;',
+    '}',
+    '.er365-hdr-overlay ul.er365-hdr-children {',
+    '  display: none; list-style: none; margin: 0; padding: 0;',
+    '  background: #f7f9fc;',
+    '}',
+    '.er365-hdr-overlay li.er365-hdr-parent.er365-hdr-expanded > ul.er365-hdr-children {',
+    '  display: block;',
+    '}',
+    '.er365-hdr-overlay ul.er365-hdr-children li a {',
+    '  padding: 12px 24px 12px 44px; font-weight: 500; font-size: 15px;',
+    '  border-bottom: 1px solid #eef2f6;',
+    '}',
+    '.er365-hdr-overlay ul.er365-hdr-children li a.er365-hdr-active {',
+    '  border-left: 3px solid #4A7EDE; padding-left: 41px;',
+    '}',
     // Avatar sections inside overlay (v4.6 — hamburger swallows avatar on mobile)
     '.er365-hdr-overlay-divider {',
     '  height: 1px; background: #d5dde6; margin: 12px 0;',
@@ -312,31 +384,23 @@
     '@media (max-width: 600px) {',
     '  .er365-hdr-modal { width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0; }',
     '}',
+    // v4.8: media queries only adjust sizing/padding, not layout visibility
     '@media (max-width: ' + (MOBILE_BREAKPOINT_PX - 1) + 'px) {',
-    '  #er365-header { padding: 14px 20px; min-height: 78px; align-items: flex-start; }',
+    '  #er365-header { padding: 14px 20px; min-height: 88px; }',
     '  .er365-hdr-logo img { height: 52px; }',
-    '  .er365-hdr-nav { display: none; }',
-    // Stack: logo on top, user group (company + welcome) below
-    '  .er365-hdr-left {',
-    '    flex-direction: column; align-items: flex-start;',
-    '    gap: 6px; white-space: normal; min-width: 0;',
-    '  }',
-    '  .er365-hdr-sep-primary { display: none; }',  // no separator between rows
     '  .er365-hdr-user { flex-wrap: wrap; row-gap: 2px; }',
     '  .er365-hdr-welcome, .er365-hdr-company { white-space: normal; }',
-    '  .er365-hdr-hamburger { display: block; }',
-    // v4.6: hide avatar circle at narrow — hamburger takes over its role too
-    '  .er365-hdr-avatar-wrap { display: none; }',
-    '  .er365-hdr-right { gap: 14px; align-items: center; }',
+    '  .er365-hdr-avatar { width: 40px; height: 40px; font-size: 14px; }',
+    '  .er365-hdr-right { gap: 14px; }',
     '}',
     '@media (max-width: 420px) {',
-    '  #er365-header { padding: 12px 12px; min-height: 68px; }',
+    '  #er365-header { padding: 12px 12px; min-height: 78px; }',
     '  .er365-hdr-logo img { height: 40px; }',
     '  .er365-hdr-avatar { width: 36px; height: 36px; font-size: 13px; }',
     '  .er365-hdr-hamburger { width: 40px; height: 40px; }',
     '  .er365-hdr-hamburger span { width: 22px; }',
     '  .er365-hdr-right { gap: 10px; }',
-    // Drop the remaining separator (between company + welcome) on tiny phones
+    // Drop the separator (between company + welcome) on tiny phones
     '  .er365-hdr-user .er365-hdr-sep { display: none; }',
     '  .er365-hdr-user { gap: 8px; }',
     '}'
@@ -688,93 +752,82 @@
 
     var ul = document.createElement('ul');
     var activePage = detectActivePage();
-    var visiblePlanNav = filterByContext(items);
     var nested = nestNav(items);
 
-    // ---------- Plan nav parents + children (Plan context only) ----------
+    // v4.9: accordion pattern. Parents with children are collapsible.
+    // Only one expanded at a time. Auto-expand parent of active child.
     nested.forEach(function (parent) {
       if (!userCanSee(parent)) return;
+
+      var visibleChildren = (parent.children || []).filter(userCanSee);
+      var parentIsActive = isActive(parent, activePage);
+      var anyChildActive = visibleChildren.some(function (c) { return isActive(c, activePage); });
+      var hasChildren = visibleChildren.length > 0;
+
       var parentLi = document.createElement('li');
       var parentA = document.createElement('a');
       parentA.textContent = parent.label;
       parentA.href = '#';
       parentA.setAttribute('data-page', itemUrl(parent));
-      if (isActive(parent, activePage)) parentA.className = 'er365-hdr-active';
-      parentA.addEventListener('click', function (e) {
-        e.preventDefault();
-        closeOverlay();
-        navigateTo(resolveDispatchedUrl(parent));
-      });
-      parentLi.appendChild(parentA);
+      if (parentIsActive) parentA.className = 'er365-hdr-active';
+
+      if (hasChildren) {
+        // Parent WITH children — accordion toggle behavior
+        parentLi.className = 'er365-hdr-parent';
+        // Auto-expand if any child is the active page
+        if (anyChildActive) parentLi.classList.add('er365-hdr-expanded');
+
+        var chevron = document.createElement('span');
+        chevron.className = 'er365-hdr-chevron';
+        chevron.textContent = '▸';
+        parentA.appendChild(chevron);
+
+        parentA.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var wasExpanded = parentLi.classList.contains('er365-hdr-expanded');
+          // Accordion: collapse all other parents first
+          ul.querySelectorAll('li.er365-hdr-parent.er365-hdr-expanded').forEach(function (el) {
+            if (el !== parentLi) el.classList.remove('er365-hdr-expanded');
+          });
+          // Toggle this parent
+          parentLi.classList.toggle('er365-hdr-expanded', !wasExpanded);
+        });
+        parentLi.appendChild(parentA);
+
+        // Nested children list (hidden until parent expanded)
+        var childUl = document.createElement('ul');
+        childUl.className = 'er365-hdr-children';
+        visibleChildren.forEach(function (child) {
+          var childLi = document.createElement('li');
+          var childA = document.createElement('a');
+          childA.textContent = child.label;
+          childA.href = '#';
+          childA.setAttribute('data-page', itemUrl(child));
+          if (isActive(child, activePage)) childA.className = 'er365-hdr-active';
+          childA.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeOverlay();
+            navigateTo(resolveDispatchedUrl(child));
+          });
+          childLi.appendChild(childA);
+          childUl.appendChild(childLi);
+        });
+        parentLi.appendChild(childUl);
+
+      } else {
+        // Parent WITHOUT children — direct navigation on click
+        parentA.addEventListener('click', function (e) {
+          e.preventDefault();
+          closeOverlay();
+          navigateTo(resolveDispatchedUrl(parent));
+        });
+        parentLi.appendChild(parentA);
+      }
+
       ul.appendChild(parentLi);
-
-      (parent.children || []).filter(userCanSee).forEach(function (child) {
-        var childLi = document.createElement('li');
-        childLi.className = 'er365-hdr-child';
-        var childA = document.createElement('a');
-        childA.textContent = child.label;
-        childA.href = '#';
-        childA.setAttribute('data-page', itemUrl(child));
-        if (isActive(child, activePage)) childA.className = 'er365-hdr-active';
-        childA.addEventListener('click', function (e) {
-          e.preventDefault();
-          closeOverlay();
-          navigateTo(resolveDispatchedUrl(child));
-        });
-        childLi.appendChild(childA);
-        ul.appendChild(childLi);
-      });
     });
-
-    // ---------- Divider (only if we rendered plan nav above) ----------
-    if (visiblePlanNav.length > 0) {
-      var dividerLi = document.createElement('li');
-      dividerLi.innerHTML = '<div class="er365-hdr-overlay-divider"></div>';
-      ul.appendChild(dividerLi);
-    }
-
-    // ---------- Avatar sections (My Account / Learning Center / Support) ----------
-    var avatarSections = (window.ER365_NAV && Array.isArray(window.ER365_NAV.avatar) && window.ER365_NAV.avatar.length > 0)
-      ? window.ER365_NAV.avatar
-      : [];
-
-    avatarSections.forEach(function (section, idx) {
-      // Section header
-      var headerLi = document.createElement('li');
-      headerLi.innerHTML = '<div class="er365-hdr-overlay-section-header"></div>';
-      headerLi.querySelector('div').textContent = section.section;
-      ul.appendChild(headerLi);
-
-      (section.items || []).forEach(function (i) {
-        var li = document.createElement('li');
-        li.className = 'er365-hdr-avatar-item';
-        var a = document.createElement('a');
-        a.textContent = i.label;
-        a.href = '#';
-        a.setAttribute('data-page', itemUrl(i));
-        a.addEventListener('click', function (e) {
-          e.preventDefault();
-          closeOverlay();
-          openAvatarItem(i);   // honors openIn: modal | newtab | in-page
-        });
-        li.appendChild(a);
-        ul.appendChild(li);
-      });
-    });
-
-    // ---------- Log Out (always at bottom) ----------
-    var logoutLi = document.createElement('li');
-    logoutLi.className = 'er365-hdr-logout-item';
-    var logoutA = document.createElement('a');
-    logoutA.textContent = 'Log Out';
-    logoutA.href = '#';
-    logoutA.addEventListener('click', function (e) {
-      e.preventDefault();
-      closeOverlay();
-      attemptLogout();
-    });
-    logoutLi.appendChild(logoutA);
-    ul.appendChild(logoutLi);
 
     overlay.appendChild(ul);
     return overlay;
@@ -846,32 +899,35 @@
     right.appendChild(buildDesktopNav(navItems));
     right.appendChild(buildAvatarMenu(user));
 
-    // Tag header for context-aware CSS (Home context keeps welcome/company visible on desktop)
+    // Tag header for context-aware CSS
     var visibleNavItems = filterByContext(navItems);
     if (visibleNavItems.length === 0) {
       header.classList.add('er365-hdr-no-nav');
     }
 
-    // v4.6: hamburger ALWAYS renders (CSS decides visibility per breakpoint).
-    // On mobile it holds plan nav (if any) + avatar sections + logout.
-    var hamburger = document.createElement('button');
-    hamburger.type = 'button';
-    hamburger.className = 'er365-hdr-hamburger';
-    hamburger.setAttribute('aria-label', 'Open navigation menu');
-    hamburger.innerHTML = '<span></span><span></span><span></span>';
-    hamburger.addEventListener('click', function (e) {
-      e.stopPropagation();
-      openOverlay();
-    });
-    right.appendChild(hamburger);
+    // v4.8: hamburger visible whenever there's plan nav to show. Home pages
+    // have no plan nav → no hamburger (avatar dropdown covers everything).
+    if (visibleNavItems.length > 0) {
+      var hamburger = document.createElement('button');
+      hamburger.type = 'button';
+      hamburger.className = 'er365-hdr-hamburger';
+      hamburger.setAttribute('aria-label', 'Open navigation menu');
+      hamburger.innerHTML = '<span></span><span></span><span></span>';
+      hamburger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        openOverlay();
+      });
+      right.appendChild(hamburger);
+    }
     header.appendChild(right);
 
     var backdrop = document.createElement('div');
     backdrop.className = 'er365-hdr-backdrop';
     backdrop.addEventListener('click', closeOverlay);
     document.body.appendChild(backdrop);
-    // v4.6: always build overlay (holds avatar sections at minimum)
-    document.body.appendChild(buildOverlayNav(navItems));
+    if (visibleNavItems.length > 0) {
+      document.body.appendChild(buildOverlayNav(navItems));
+    }
 
     document.addEventListener('click', function () {
       document.querySelectorAll('.er365-hdr-open').forEach(function (el) {
