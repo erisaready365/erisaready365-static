@@ -1,7 +1,17 @@
-/* er365-header.js v4.10 */
+/* er365-header.js v4.11 */
 /**
- * ERISAReady365 Header Component (v4.10)
+ * ERISAReady365 Header Component (v4.11)
  * =====================================
+ *
+ * v4.11 CHANGES (2026-07-21) — LOGO SWAP + TIGHTER SPACING + INDENT DEFAULT:
+ *   - Default logo URL updated to new BOLD-TAG variant that emphasizes
+ *     "The Confidence of Fiduciary Excellence" tagline.
+ *   - Default userIndentPx locked to 68 (was 90) — matches James's
+ *     eyeballed alignment with "T" in the tagline. Mount blocks no
+ *     longer need to override.
+ *   - Tightened vertical spacing between logo row and welcome row
+ *     (gap 6px → 2px) for sleeker, less clunky feel. Header min-height
+ *     trimmed from 108px → 100px.
  *
  * v4.10 CHANGES (2026-07-21) — USER ROW INDENT ALIGNMENT:
  *   - Company name + welcome now indent to visually align with the "T"
@@ -128,7 +138,7 @@
 (function () {
   'use strict';
 
-  try { console.log('%c[ER365] Header v4.10 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
+  try { console.log('%c[ER365] Header v4.11 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
 
   // ---------------------------------------------------------
   // CONFIGURATION
@@ -138,14 +148,14 @@
 
   var LOGO_URL =
     CFG.logoUrl ||
-    'https://erisaready365.com/wp-content/uploads/2026/07/b3413c3f036b4543a77afe74801e0604.webp';
+    'https://erisaready365.com/wp-content/uploads/2026/07/ERISA-READY-365-With-1-tm-bottom-BOLD-TAG.png';
 
   var LOGOUT_URL = CFG.logoutUrl || '/users/x202vq/logout';
   var PROFILE_PAGE = CFG.profilePage || 'my-account';
   var ACCOUNT_PAGE = CFG.accountPage || 'my-account';
 
   var MOBILE_BREAKPOINT_PX = CFG.mobileBreakpointPx || 1500;
-  var USER_INDENT_PX = CFG.userIndentPx != null ? CFG.userIndentPx : 90;  // v4.10: align company name with "T" in logo tagline
+  var USER_INDENT_PX = CFG.userIndentPx != null ? CFG.userIndentPx : 68;  // v4.11: aligns "R" of RetireWell.io with "T" in "The Confidence..." tagline
 
   var FORM_PAGE_MARKERS = CFG.formPageMarkers || [
     'fiduciary-navigator',
@@ -178,16 +188,16 @@
     '#er365-header {',
     '  position: sticky; top: 0; z-index: 9999;',
     '  display: flex; align-items: center;',
-    '  padding: 14px 40px; background: #ffffff;',
+    '  padding: 10px 40px; background: #ffffff;',
     '  border-bottom: 1px solid #e6ebf1;',
     '  font-family: Calibri, "Segoe UI", Arial, sans-serif;',
     '  font-size: 16px; color: #002855;',
-    '  min-height: 108px; box-sizing: border-box;',
+    '  min-height: 100px; box-sizing: border-box;',
     '}',
-    // v4.7: left column ALWAYS stacks — logo on top, user group (company + welcome) below
+    // v4.11: tighter gap between logo row and user row for sleeker look
     '.er365-hdr-left {',
     '  display: flex; flex-direction: column; align-items: flex-start;',
-    '  gap: 6px; white-space: nowrap; flex-shrink: 0; min-width: 0;',
+    '  gap: 2px; white-space: nowrap; flex-shrink: 0; min-width: 0;',
     '}',
     '.er365-hdr-logo img { height: 66px; display: block; }',
     '.er365-hdr-sep-primary { display: none; }',   // always hidden — row separator not shown between stacked rows
