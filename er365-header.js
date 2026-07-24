@@ -1,7 +1,26 @@
-/* er365-header.js v4.4 */
+/* er365-header.js v4.6 */
 /**
- * ERISAReady365 Header Component (v4.4)
+ * ERISAReady365 Header Component (v4.6)
  * =====================================
+ *
+ * v4.6 CHANGES (2026-07-21) — HAMBURGER SWALLOWS AVATAR ON MOBILE:
+ *   - At ≤1099px: avatar circle hides. Hamburger overlay contains:
+ *       (Plan context) plan nav parents + children
+ *       divider
+ *       Avatar sections (My Account / Learning Center / Support)
+ *       Log Out
+ *     One mobile entry point instead of two competing buttons.
+ *   - Home context on mobile: hamburger still appears (holds avatar sections
+ *     that would otherwise be inaccessible).
+ *   - openIn behavior (modal / newtab) honored inside the overlay too.
+ *
+ * v4.5 CHANGES (2026-07-21) — STACK COMPANY + WELCOME UNDER LOGO ON NARROW:
+ *   - Desktop unchanged (logo | company | welcome on one row).
+ *   - Narrow widths: company + welcome move UNDER the logo as a second row.
+ *   - Kills horizontal scroll bar caused by the wide wordmark logo pushing
+ *     welcome text off-screen. Also gives welcome text more breathing room.
+ *   - DOM restructure: company + welcome now wrapped in .er365-hdr-user so
+ *     they move as a unit.
  *
  * v4.4 CHANGES (2026-07-21) — MOBILE HEADER FIX (Plan context too):
  *   - Plan context also keeps welcome + company visible at narrow
@@ -70,7 +89,7 @@
 (function () {
   'use strict';
 
-  try { console.log('%c[ER365] Header v4.4 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
+  try { console.log('%c[ER365] Header v4.6 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
 
   // ---------------------------------------------------------
   // CONFIGURATION
@@ -125,8 +144,9 @@
     '  font-size: 16px; color: #002855;',
     '  min-height: 96px; box-sizing: border-box;',
     '}',
-    '.er365-hdr-left { display: flex; align-items: center; gap: 14px; white-space: nowrap; flex-shrink: 0; }',
+    '.er365-hdr-left { display: flex; align-items: center; gap: 14px; white-space: nowrap; flex-shrink: 0; min-width: 0; }',
     '.er365-hdr-logo img { height: 66px; display: block; }',
+    '.er365-hdr-user { display: flex; align-items: center; gap: 14px; }',
     '.er365-hdr-sep { color: #b0b8c4; font-weight: 400; padding: 0 4px; }',
     '.er365-hdr-company { color: #002855; font-weight: 600; }',
     '.er365-hdr-welcome { color: #002855; font-weight: 400; }',
@@ -223,6 +243,22 @@
     '  border-left: 3px solid #4A7EDE; padding-left: 21px;',
     '}',
     '.er365-hdr-overlay li.er365-hdr-child a.er365-hdr-active { padding-left: 41px; }',
+    // Avatar sections inside overlay (v4.6 — hamburger swallows avatar on mobile)
+    '.er365-hdr-overlay-divider {',
+    '  height: 1px; background: #d5dde6; margin: 12px 0;',
+    '}',
+    '.er365-hdr-overlay-section-header {',
+    '  padding: 10px 24px 6px; color: #7a8598; font-size: 11px; font-weight: 700;',
+    '  text-transform: uppercase; letter-spacing: 0.5px;',
+    '}',
+    '.er365-hdr-overlay li.er365-hdr-avatar-item a {',
+    '  padding: 12px 24px; font-weight: 500; font-size: 15px;',
+    '  border-bottom: 1px solid #eef2f6;',
+    '}',
+    '.er365-hdr-overlay li.er365-hdr-logout-item a {',
+    '  color: #b0392f; margin-top: 12px; border-top: 2px solid #eef2f6;',
+    '  border-bottom: none; padding-top: 16px;',
+    '}',
     '.er365-hdr-backdrop {',
     '  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.35);',
     '  z-index: 9998; opacity: 0; pointer-events: none; transition: opacity 0.2s;',
@@ -277,18 +313,21 @@
     '  .er365-hdr-modal { width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0; }',
     '}',
     '@media (max-width: ' + (MOBILE_BREAKPOINT_PX - 1) + 'px) {',
-    '  #er365-header { padding: 14px 20px; min-height: 78px; }',
+    '  #er365-header { padding: 14px 20px; min-height: 78px; align-items: flex-start; }',
     '  .er365-hdr-logo img { height: 52px; }',
     '  .er365-hdr-nav { display: none; }',
-    // Both contexts keep welcome + company visible. The full nav has already
-    // collapsed to the hamburger, so there is plenty of room.
+    // Stack: logo on top, user group (company + welcome) below
     '  .er365-hdr-left {',
-    '    flex-wrap: wrap; white-space: normal; min-width: 0; row-gap: 4px;',
+    '    flex-direction: column; align-items: flex-start;',
+    '    gap: 6px; white-space: normal; min-width: 0;',
     '  }',
+    '  .er365-hdr-sep-primary { display: none; }',  // no separator between rows
+    '  .er365-hdr-user { flex-wrap: wrap; row-gap: 2px; }',
     '  .er365-hdr-welcome, .er365-hdr-company { white-space: normal; }',
     '  .er365-hdr-hamburger { display: block; }',
-    '  .er365-hdr-avatar { width: 40px; height: 40px; font-size: 14px; }',
-    '  .er365-hdr-right { gap: 14px; }',
+    // v4.6: hide avatar circle at narrow — hamburger takes over its role too
+    '  .er365-hdr-avatar-wrap { display: none; }',
+    '  .er365-hdr-right { gap: 14px; align-items: center; }',
     '}',
     '@media (max-width: 420px) {',
     '  #er365-header { padding: 12px 12px; min-height: 68px; }',
@@ -297,9 +336,9 @@
     '  .er365-hdr-hamburger { width: 40px; height: 40px; }',
     '  .er365-hdr-hamburger span { width: 22px; }',
     '  .er365-hdr-right { gap: 10px; }',
-    // Drop separators on very narrow screens to keep welcome text prominent
-    '  .er365-hdr-sep { display: none; }',
-    '  .er365-hdr-left { gap: 8px; }',
+    // Drop the remaining separator (between company + welcome) on tiny phones
+    '  .er365-hdr-user .er365-hdr-sep { display: none; }',
+    '  .er365-hdr-user { gap: 8px; }',
     '}'
   ].join('\n');
 
@@ -649,8 +688,10 @@
 
     var ul = document.createElement('ul');
     var activePage = detectActivePage();
+    var visiblePlanNav = filterByContext(items);
     var nested = nestNav(items);
 
+    // ---------- Plan nav parents + children (Plan context only) ----------
     nested.forEach(function (parent) {
       if (!userCanSee(parent)) return;
       var parentLi = document.createElement('li');
@@ -667,7 +708,6 @@
       parentLi.appendChild(parentA);
       ul.appendChild(parentLi);
 
-      // Render children indented below (mobile users need direct access)
       (parent.children || []).filter(userCanSee).forEach(function (child) {
         var childLi = document.createElement('li');
         childLi.className = 'er365-hdr-child';
@@ -685,6 +725,56 @@
         ul.appendChild(childLi);
       });
     });
+
+    // ---------- Divider (only if we rendered plan nav above) ----------
+    if (visiblePlanNav.length > 0) {
+      var dividerLi = document.createElement('li');
+      dividerLi.innerHTML = '<div class="er365-hdr-overlay-divider"></div>';
+      ul.appendChild(dividerLi);
+    }
+
+    // ---------- Avatar sections (My Account / Learning Center / Support) ----------
+    var avatarSections = (window.ER365_NAV && Array.isArray(window.ER365_NAV.avatar) && window.ER365_NAV.avatar.length > 0)
+      ? window.ER365_NAV.avatar
+      : [];
+
+    avatarSections.forEach(function (section, idx) {
+      // Section header
+      var headerLi = document.createElement('li');
+      headerLi.innerHTML = '<div class="er365-hdr-overlay-section-header"></div>';
+      headerLi.querySelector('div').textContent = section.section;
+      ul.appendChild(headerLi);
+
+      (section.items || []).forEach(function (i) {
+        var li = document.createElement('li');
+        li.className = 'er365-hdr-avatar-item';
+        var a = document.createElement('a');
+        a.textContent = i.label;
+        a.href = '#';
+        a.setAttribute('data-page', itemUrl(i));
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          closeOverlay();
+          openAvatarItem(i);   // honors openIn: modal | newtab | in-page
+        });
+        li.appendChild(a);
+        ul.appendChild(li);
+      });
+    });
+
+    // ---------- Log Out (always at bottom) ----------
+    var logoutLi = document.createElement('li');
+    logoutLi.className = 'er365-hdr-logout-item';
+    var logoutA = document.createElement('a');
+    logoutA.textContent = 'Log Out';
+    logoutA.href = '#';
+    logoutA.addEventListener('click', function (e) {
+      e.preventDefault();
+      closeOverlay();
+      attemptLogout();
+    });
+    logoutLi.appendChild(logoutA);
+    ul.appendChild(logoutLi);
 
     overlay.appendChild(ul);
     return overlay;
@@ -720,27 +810,35 @@
     logoWrap.appendChild(logoImg);
     left.appendChild(logoWrap);
 
+    // Separator between logo and user group (hidden when they stack on mobile)
+    var sepPrimary = document.createElement('span');
+    sepPrimary.className = 'er365-hdr-sep er365-hdr-sep-primary';
+    sepPrimary.textContent = '|';
+    left.appendChild(sepPrimary);
+
+    // User group — company + welcome move together as a unit
+    var userGroup = document.createElement('div');
+    userGroup.className = 'er365-hdr-user';
+
     if (company) {
-      var sep1 = document.createElement('span');
-      sep1.className = 'er365-hdr-sep';
-      sep1.textContent = '|';
-      left.appendChild(sep1);
       var companyEl = document.createElement('span');
       companyEl.className = 'er365-hdr-company';
       companyEl.textContent = company;
-      left.appendChild(companyEl);
-    }
+      userGroup.appendChild(companyEl);
 
-    var sep2 = document.createElement('span');
-    sep2.className = 'er365-hdr-sep';
-    sep2.textContent = '|';
-    left.appendChild(sep2);
+      var sepBetween = document.createElement('span');
+      sepBetween.className = 'er365-hdr-sep';
+      sepBetween.textContent = '|';
+      userGroup.appendChild(sepBetween);
+    }
 
     var welcome = document.createElement('span');
     welcome.className = 'er365-hdr-welcome';
     welcome.innerHTML = 'Welcome, <strong></strong>';
     welcome.querySelector('strong').textContent = name;
-    left.appendChild(welcome);
+    userGroup.appendChild(welcome);
+
+    left.appendChild(userGroup);
     header.appendChild(left);
 
     var right = document.createElement('div');
@@ -748,34 +846,32 @@
     right.appendChild(buildDesktopNav(navItems));
     right.appendChild(buildAvatarMenu(user));
 
-    // Only render hamburger if there ARE nav items (Home context has none)
+    // Tag header for context-aware CSS (Home context keeps welcome/company visible on desktop)
     var visibleNavItems = filterByContext(navItems);
-    // Tag header for context-aware CSS (Home context keeps welcome/company visible)
     if (visibleNavItems.length === 0) {
       header.classList.add('er365-hdr-no-nav');
     }
-    if (visibleNavItems.length > 0) {
-      var hamburger = document.createElement('button');
-      hamburger.type = 'button';
-      hamburger.className = 'er365-hdr-hamburger';
-      hamburger.setAttribute('aria-label', 'Open navigation menu');
-      hamburger.innerHTML = '<span></span><span></span><span></span>';
-      hamburger.addEventListener('click', function (e) {
-        e.stopPropagation();
-        openOverlay();
-      });
-      right.appendChild(hamburger);
-    }
+
+    // v4.6: hamburger ALWAYS renders (CSS decides visibility per breakpoint).
+    // On mobile it holds plan nav (if any) + avatar sections + logout.
+    var hamburger = document.createElement('button');
+    hamburger.type = 'button';
+    hamburger.className = 'er365-hdr-hamburger';
+    hamburger.setAttribute('aria-label', 'Open navigation menu');
+    hamburger.innerHTML = '<span></span><span></span><span></span>';
+    hamburger.addEventListener('click', function (e) {
+      e.stopPropagation();
+      openOverlay();
+    });
+    right.appendChild(hamburger);
     header.appendChild(right);
 
     var backdrop = document.createElement('div');
     backdrop.className = 'er365-hdr-backdrop';
     backdrop.addEventListener('click', closeOverlay);
     document.body.appendChild(backdrop);
-    // Only build mobile overlay if there are nav items to show
-    if (visibleNavItems.length > 0) {
-      document.body.appendChild(buildOverlayNav(navItems));
-    }
+    // v4.6: always build overlay (holds avatar sections at minimum)
+    document.body.appendChild(buildOverlayNav(navItems));
 
     document.addEventListener('click', function () {
       document.querySelectorAll('.er365-hdr-open').forEach(function (el) {
