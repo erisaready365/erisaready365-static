@@ -1,7 +1,12 @@
-/* er365-header.js v4.9 */
+/* er365-header.js v4.10 */
 /**
- * ERISAReady365 Header Component (v4.9)
+ * ERISAReady365 Header Component (v4.10)
  * =====================================
+ *
+ * v4.10 CHANGES (2026-07-21) — USER ROW INDENT ALIGNMENT:
+ *   - Company name + welcome now indent to visually align with the "T"
+ *     in the logo tagline "The Confidence of Fiduciary Excellence".
+ *   - Default indent 90px, tunable via window.ER365_CFG.userIndentPx.
  *
  * v4.9 CHANGES (2026-07-21) — ACCORDION HAMBURGER OVERLAY:
  *   - Overlay initially shows ONLY parent items (Home, Plan Dashboard,
@@ -123,7 +128,7 @@
 (function () {
   'use strict';
 
-  try { console.log('%c[ER365] Header v4.9 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
+  try { console.log('%c[ER365] Header v4.10 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
 
   // ---------------------------------------------------------
   // CONFIGURATION
@@ -140,6 +145,7 @@
   var ACCOUNT_PAGE = CFG.accountPage || 'my-account';
 
   var MOBILE_BREAKPOINT_PX = CFG.mobileBreakpointPx || 1500;
+  var USER_INDENT_PX = CFG.userIndentPx != null ? CFG.userIndentPx : 90;  // v4.10: align company name with "T" in logo tagline
 
   var FORM_PAGE_MARKERS = CFG.formPageMarkers || [
     'fiduciary-navigator',
@@ -185,7 +191,7 @@
     '}',
     '.er365-hdr-logo img { height: 66px; display: block; }',
     '.er365-hdr-sep-primary { display: none; }',   // always hidden — row separator not shown between stacked rows
-    '.er365-hdr-user { display: flex; align-items: center; gap: 14px; }',
+    '.er365-hdr-user { display: flex; align-items: center; gap: 14px; padding-left: ' + USER_INDENT_PX + 'px; }',
     '.er365-hdr-sep { color: #b0b8c4; font-weight: 400; padding: 0 4px; }',
     '.er365-hdr-company { color: #002855; font-weight: 600; }',
     '.er365-hdr-welcome { color: #002855; font-weight: 400; }',
@@ -388,7 +394,8 @@
     '@media (max-width: ' + (MOBILE_BREAKPOINT_PX - 1) + 'px) {',
     '  #er365-header { padding: 14px 20px; min-height: 88px; }',
     '  .er365-hdr-logo img { height: 52px; }',
-    '  .er365-hdr-user { flex-wrap: wrap; row-gap: 2px; }',
+    // v4.10: scale user indent with smaller logo
+    '  .er365-hdr-user { flex-wrap: wrap; row-gap: 2px; padding-left: ' + Math.round(USER_INDENT_PX * 0.75) + 'px; }',
     '  .er365-hdr-welcome, .er365-hdr-company { white-space: normal; }',
     '  .er365-hdr-avatar { width: 40px; height: 40px; font-size: 14px; }',
     '  .er365-hdr-right { gap: 14px; }',
@@ -400,9 +407,9 @@
     '  .er365-hdr-hamburger { width: 40px; height: 40px; }',
     '  .er365-hdr-hamburger span { width: 22px; }',
     '  .er365-hdr-right { gap: 10px; }',
-    // Drop the separator (between company + welcome) on tiny phones
+    // Drop the separator (between company + welcome) on tiny phones + tighter indent
     '  .er365-hdr-user .er365-hdr-sep { display: none; }',
-    '  .er365-hdr-user { gap: 8px; }',
+    '  .er365-hdr-user { gap: 8px; padding-left: ' + Math.round(USER_INDENT_PX * 0.55) + 'px; }',
     '}'
   ].join('\n');
 
