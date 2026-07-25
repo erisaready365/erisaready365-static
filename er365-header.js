@@ -1,7 +1,20 @@
-/* er365-header.js v4.14 */
+/* er365-header.js v4.16 */
 /**
- * ERISAReady365 Header Component (v4.14)
+ * ERISAReady365 Header Component (v4.16)
  * =====================================
+ *
+ * v4.16 CHANGES (2026-07-23) — LOG OUT MOVED TO TOP OF MY ACCOUNT:
+ *   - Log Out is now the FIRST item under the "MY ACCOUNT" section
+ *     header in the avatar dropdown (was at the very bottom of the
+ *     entire menu). More discoverable, treats logout as an account
+ *     action grouped with related items.
+ *   - Retains its red-color visual distinction so users can't miss it.
+ *
+ * v4.15 CHANGES (2026-07-23) — WELCOME ROW WEIGHT REBALANCE:
+ *   - Company name stays BOLD (600) — anchor of the row.
+ *   - "Welcome" label + user name both REGULAR (400).
+ *   - Previously the user name was bolded via <strong> — removed
+ *     that weight so only the company reads as heavy.
  *
  * v4.14 CHANGES (2026-07-23) — HAMBURGER OVERLAY SCROLL HARDENING:
  *   - Reinforced overlay overflow-y: auto with overscroll-behavior:
@@ -158,7 +171,7 @@
 (function () {
   'use strict';
 
-  try { console.log('%c[ER365] Header v4.14 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
+  try { console.log('%c[ER365] Header v4.16 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
 
   // ---------------------------------------------------------
   // CONFIGURATION
@@ -224,9 +237,10 @@
     '.er365-hdr-user { display: flex; align-items: center; gap: 14px; padding-left: ' + USER_INDENT_PX + 'px; }',
     '.er365-hdr-sep { color: #b0b8c4; font-weight: 400; padding: 0 4px; }',
     // v4.12: welcome row uses brand light blue (#3363AD) to reduce competition with navy logo
+    // v4.15: only company name is bold; "Welcome" + user name are regular weight
     '.er365-hdr-company { color: #3363AD; font-weight: 600; }',
     '.er365-hdr-welcome { color: #3363AD; font-weight: 400; }',
-    '.er365-hdr-welcome strong { color: #3363AD; font-weight: 600; }',
+    '.er365-hdr-welcome strong { color: #3363AD; font-weight: 400; }',
     '.er365-hdr-right { margin-left: auto; display: flex; align-items: center; gap: 20px; }',
     // v4.8: full desktop nav bar is permanently hidden — hamburger is the only entry point
     '.er365-hdr-nav { display: none !important; }',
@@ -287,6 +301,12 @@
     '.er365-hdr-avatar-menu a:hover { background: #f0f4f9; }',
     '.er365-hdr-avatar-menu a.er365-hdr-logout {',
     '  color: #b0392f; border-top: 1px solid #eef2f6; margin-top: 4px;',
+    '}',
+    // v4.16: Log Out at top of My Account — no top border (would collide with section header)
+    '.er365-hdr-avatar-menu a.er365-hdr-logout-top {',
+    '  color: #b0392f; border-top: none; margin-top: 0;',
+    '  border-bottom: 1px solid #eef2f6;',
+    '  font-weight: 600;',
     '}',
     // v4.8: hamburger visible at ALL widths (was: only mobile)
     '.er365-hdr-hamburger {',
@@ -748,6 +768,20 @@
       header.textContent = section.section;
       menu.appendChild(header);
 
+      // v4.16: inject Log Out as the FIRST item under "My Account" section
+      if (section.section === 'My Account') {
+        var logout = document.createElement('a');
+        logout.textContent = 'Log Out';
+        logout.href = '#';
+        logout.className = 'er365-hdr-logout er365-hdr-logout-top';
+        logout.addEventListener('click', function (e) {
+          e.preventDefault();
+          wrap.classList.remove('er365-hdr-open');
+          attemptLogout();
+        });
+        menu.appendChild(logout);
+      }
+
       (section.items || []).forEach(function (i) {
         var a = document.createElement('a');
         a.textContent = i.label;
@@ -762,17 +796,6 @@
       });
     });
 
-    // Logout always at bottom
-    var logout = document.createElement('a');
-    logout.textContent = 'Log Out';
-    logout.href = '#';
-    logout.className = 'er365-hdr-logout';
-    logout.addEventListener('click', function (e) {
-      e.preventDefault();
-      wrap.classList.remove('er365-hdr-open');
-      attemptLogout();
-    });
-    menu.appendChild(logout);
     wrap.appendChild(menu);
     return wrap;
   }
