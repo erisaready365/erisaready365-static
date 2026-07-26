@@ -1,7 +1,29 @@
-/* er365-header.js v4.16 */
+/* er365-header.js v4.18 */
 /**
- * ERISAReady365 Header Component (v4.16)
+ * ERISAReady365 Header Component (v4.18)
  * =====================================
+ *
+ * v4.18 CHANGES (2026-07-23) — IDLE-TIMEOUT AUTO EXIT:
+ *   - Tracks user activity (click, keydown, scroll, touchstart).
+ *   - After 2 hours of no activity (matches Caspio Flex session
+ *     timeout), automatically triggers the v4.17 hard exit sequence
+ *     (clear storage → kill server session → navigate to marketing).
+ *   - Configurable via window.ER365_CFG.idleTimeoutMs (milliseconds).
+ *   - Idle timer resets on any tracked activity.
+ *   - Runs on shell pages only (where the header loads). Form pages
+ *     without the header are not covered — that's task-app scope.
+ *
+ * v4.17 CHANGES (2026-07-23) — HARD LOGOUT WITH CACHE WIPE:
+ *   - Logout now performs THREE steps for a clean session exit:
+ *       1. Clears localStorage + sessionStorage (client-side state)
+ *       2. Hits Caspio /logout via hidden iframe (server-side session kill)
+ *       3. Navigates to https://erisaready365.com (marketing site)
+ *          with cache-bust query string
+ *   - Configurable via window.ER365_CFG.afterLogoutUrl (defaults to
+ *     erisaready365.com). Set to any URL to change destination.
+ *   - Fixes "partial login" symptom: previously users could bounce
+ *     between Caspio pages with stale JS state carrying over from
+ *     the prior session.
  *
  * v4.16 CHANGES (2026-07-23) — LOG OUT MOVED TO TOP OF MY ACCOUNT:
  *   - Log Out is now the FIRST item under the "MY ACCOUNT" section
@@ -171,7 +193,7 @@
 (function () {
   'use strict';
 
-  try { console.log('%c[ER365] Header v4.16 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
+  try { console.log('%c[ER365] Header v4.18 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
 
   // ---------------------------------------------------------
   // CONFIGURATION
@@ -184,6 +206,8 @@
     'https://erisaready365.com/wp-content/uploads/2026/07/ERISA-READY-365-With-1-tm-bottom-BOLD-TAG.png';
 
   var LOGOUT_URL = CFG.logoutUrl || '/users/x202vq/logout';
+  var AFTER_LOGOUT_URL = CFG.afterLogoutUrl || 'https://erisaready365.com';  // v4.17: where to land after full logout
+  var IDLE_TIMEOUT_MS  = CFG.idleTimeoutMs  || (2 * 60 * 60 * 1000);         // v4.18: 2h matches Caspio Flex session default
   var PROFILE_PAGE = CFG.profilePage || 'my-account';
   var ACCOUNT_PAGE = CFG.accountPage || 'my-account';
 
@@ -1178,11 +1202,32 @@
   }
 
   function performLogout() {
+    // Demo mode — file:// protocol, no real session to kill
     if (window.location.protocol === 'file:') {
-      alert('Log Out (demo mode).\n\nIn Caspio production this would redirect to: ' + LOGOUT_URL);
+      alert('Log Out (demo mode).\n\nProduction would:\n1. Clear localStorage + sessionStorage\n2. Hit ' + LOGOUT_URL + ' via iframe\n3. Navigate to ' + AFTER_LOGOUT_URL);
       return;
     }
-    window.location.href = LOGOUT_URL;
+
+    // Step 1 — clear client-side storage (removes stale user state that
+    // was causing "partial login" symptoms when users re-authenticated)
+    try { localStorage.clear(); } catch (e) {}
+    try { sessionStorage.clear(); } catch (e) {}
+
+    // Step 2 — destroy the server-side session by hitting Caspio's
+    // logout endpoint in a hidden iframe (no page navigation yet)
+    var iframe = document.createElement('iframe');
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;border:0;';
+    iframe.src = LOGOUT_URL;
+    document.body.appendChild(iframe);
+
+    // Step 3 — after brief delay to let the logout request complete,
+    // navigate the main window to the marketing site (with cache-bust
+    // query string so browser fetches fresh)
+    setTimeout(function () {
+      var sep = AFTER_LOGOUT_URL.indexOf('?') >= 0 ? '&' : '?';
+      window.location.replace(AFTER_LOGOUT_URL + sep + '_=' + Date.now());
+    }, 600);
   }
 
   function applyGating(root) {
@@ -1241,6 +1286,35 @@
   // Boot
   // ---------------------------------------------------------
 
+  // ---------------------------------------------------------
+  // v4.18: idle-timeout auto-exit
+  // ---------------------------------------------------------
+
+  function startIdleTimeoutWatcher() {
+    if (window.ER365_IDLE_STARTED) return;   // avoid double-init on re-boot
+    window.ER365_IDLE_STARTED = true;
+
+    var lastActivity = Date.now();
+    var events = ['click', 'keydown', 'scroll', 'mousemove', 'touchstart'];
+    var reset = function () { lastActivity = Date.now(); };
+    events.forEach(function (evt) {
+      document.addEventListener(evt, reset, { passive: true, capture: true });
+    });
+
+    // Check every 60 seconds. Cheap.
+    setInterval(function () {
+      var idleMs = Date.now() - lastActivity;
+      if (idleMs > IDLE_TIMEOUT_MS) {
+        try {
+          console.warn('[ER365] Session idle for ' + Math.round(idleMs / 60000) +
+                       ' min (limit ' + Math.round(IDLE_TIMEOUT_MS / 60000) +
+                       ' min). Triggering hard exit.');
+        } catch (e) {}
+        performLogout();
+      }
+    }, 60 * 1000);
+  }
+
   function boot() {
     try { console.log('%c[ER365] boot() running, user:', 'color:#4A7EDE;font-weight:bold', window.ER365_USER); } catch(e){}
     if (document.querySelector('#er365-header')) return;
@@ -1248,6 +1322,7 @@
     exposeGlobals();
     applyGating(document);
     watchDomForGating();
+    startIdleTimeoutWatcher();
     loadNavItems(function (items) {
       var root = document.querySelector('#er365-header-root');
       var header = buildHeader(items);
