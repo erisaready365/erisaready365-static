@@ -1,7 +1,19 @@
-/* er365-header.js v4.18 */
+/* er365-header.js v4.19 */
 /**
- * ERISAReady365 Header Component (v4.18)
+ * ERISAReady365 Header Component (v4.19)
  * =====================================
+ *
+ * v4.19 CHANGES (2026-07-23) — RACE-CONDITION + IDLE-EVENT FIXES:
+ *   - Removed 'mousemove' from tracked activity events. It fired
+ *     constantly as the cursor drifted → idle timer never expired.
+ *     Idle is now defined by: click, keydown, scroll, touchstart.
+ *   - Adaptive check interval: min(60s, timeout/4). Short test
+ *     timeouts (e.g., 60s) now trigger promptly instead of
+ *     needing 2 minutes worst case.
+ *   - Fixed partial-menu-on-load bug: header engine now polls up
+ *     to 3 seconds for window.ER365_NAV to arrive before falling
+ *     back to hardcoded 1-item list. Solves intermittent "only
+ *     Plan Dashboard visible" symptom seen after re-login.
  *
  * v4.18 CHANGES (2026-07-23) — IDLE-TIMEOUT AUTO EXIT:
  *   - Tracks user activity (click, keydown, scroll, touchstart).
@@ -193,7 +205,7 @@
 (function () {
   'use strict';
 
-  try { console.log('%c[ER365] Header v4.18 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
+  try { console.log('%c[ER365] Header v4.19 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
 
   // ---------------------------------------------------------
   // CONFIGURATION
@@ -630,14 +642,31 @@
 
   function useExternalOrFallback(callback) {
     // 2) External nav-items.js file (window.ER365_NAV.items)
-    if (window.ER365_NAV && Array.isArray(window.ER365_NAV.items) && window.ER365_NAV.items.length > 0) {
+    var have = function () {
+      return window.ER365_NAV && Array.isArray(window.ER365_NAV.items) && window.ER365_NAV.items.length > 0;
+    };
+    if (have()) {
       try { console.log('[ER365 Header] Using external nav-items v' + (window.ER365_NAV.version || '?') + ' — ' + window.ER365_NAV.items.length + ' items'); } catch(e){}
       callback(window.ER365_NAV.items);
       return;
     }
-    // 3) Last-resort hardcoded fallback
-    console.warn('[ER365 Header] No nav source found — using hardcoded FALLBACK_NAV_ITEMS');
-    callback(FALLBACK_NAV_ITEMS);
+    // v4.19: nav-items script may not have finished executing yet — poll
+    // for up to 3 seconds before giving up. Fixes the intermittent
+    // "only Plan Dashboard visible" symptom on re-login.
+    var attempts = 0;
+    var MAX_ATTEMPTS = 30;   // 30 × 100ms = 3s
+    var waiter = setInterval(function () {
+      attempts++;
+      if (have()) {
+        clearInterval(waiter);
+        try { console.log('[ER365 Header] nav-items arrived after ' + (attempts * 100) + 'ms — using v' + (window.ER365_NAV.version || '?') + ' — ' + window.ER365_NAV.items.length + ' items'); } catch(e){}
+        callback(window.ER365_NAV.items);
+      } else if (attempts >= MAX_ATTEMPTS) {
+        clearInterval(waiter);
+        console.warn('[ER365 Header] window.ER365_NAV never arrived after 3s — using hardcoded FALLBACK_NAV_ITEMS');
+        callback(FALLBACK_NAV_ITEMS);
+      }
+    }, 100);
   }
 
   function filterByContext(items) {
@@ -1295,24 +1324,28 @@
     window.ER365_IDLE_STARTED = true;
 
     var lastActivity = Date.now();
-    var events = ['click', 'keydown', 'scroll', 'mousemove', 'touchstart'];
+    // v4.19: NO mousemove — it fires constantly and prevents idle from ever expiring.
+    // Idle = no deliberate interaction (click / keypress / scroll / touch).
+    var events = ['click', 'keydown', 'scroll', 'touchstart'];
     var reset = function () { lastActivity = Date.now(); };
     events.forEach(function (evt) {
       document.addEventListener(evt, reset, { passive: true, capture: true });
     });
 
-    // Check every 60 seconds. Cheap.
+    // Adaptive check interval so short test timeouts trigger promptly.
+    // At 2h timeout → checks every 60s. At 60s timeout → checks every 15s.
+    var checkIntervalMs = Math.min(60 * 1000, Math.max(5 * 1000, Math.floor(IDLE_TIMEOUT_MS / 4)));
     setInterval(function () {
       var idleMs = Date.now() - lastActivity;
-      if (idleMs > IDLE_TIMEOUT_MS) {
+      if (idleMs >= IDLE_TIMEOUT_MS) {
         try {
-          console.warn('[ER365] Session idle for ' + Math.round(idleMs / 60000) +
-                       ' min (limit ' + Math.round(IDLE_TIMEOUT_MS / 60000) +
-                       ' min). Triggering hard exit.');
+          console.warn('[ER365] Session idle for ' + Math.round(idleMs / 1000) +
+                       's (limit ' + Math.round(IDLE_TIMEOUT_MS / 1000) +
+                       's). Triggering hard exit.');
         } catch (e) {}
         performLogout();
       }
-    }, 60 * 1000);
+    }, checkIntervalMs);
   }
 
   function boot() {
