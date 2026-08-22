@@ -135,4 +135,13 @@
   function boot() {
     if (document.querySelector('.er365-fn-hdr')) return;
     injectStyles();
-    var header =
+    var header = buildHeader();
+    var root = document.querySelector('#er365-fn-header-root');
+    if (root) root.parentNode.replaceChild(header, root);
+    else document.body.insertBefore(header, document.body.firstChild);
+    var logout = header.querySelector('.er365-fn-hdr-logout');
+    if (logout) logout.addEventListener('click', function (e) { e.preventDefault(); attemptLogout(); });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
