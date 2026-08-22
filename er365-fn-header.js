@@ -1,16 +1,14 @@
-/* er365-fn-header.js v1.3 */
+/* er365-fn-header.js v1.4 */
 /**
- * ERISAReady365 — Fiduciary Navigator App Header (v1.3)
- * v1.3 CHANGES (2026-08-18):
- *   - Bigger FN logo (110px, matches old header)
- *   - Bigger powered-by logo (35px), below progress bar
- *   - Larger welcome/logout font (15px, more weight)
- *   - Bolder pill text with text-shadow for readability
+ * v1.4 CHANGES (2026-08-18):
+ *   - FN logo down to 110px
+ *   - Removed powered-by block (moved to page footer)
+ *   - Welcome/Log Out smaller (13px)
  */
 
 (function () {
   'use strict';
-  try { console.log('%c[ER365] FN Header v1.3 loaded', 'color:#4A7EDE;font-weight:bold'); } catch (e) {}
+  try { console.log('%c[ER365] FN Header v1.4 loaded', 'color:#4A7EDE;font-weight:bold'); } catch (e) {}
 
   // Timeout guard
   (function installTimeoutGuard() {
@@ -37,7 +35,6 @@
   })();
 
   var FN_LOGO_URL = 'https://erisaready365.com/wp-content/uploads/2026/07/Fiduciary-Navigator-Bold-Large-FONT-scaled.png';
-  var POWERED_BY_URL = 'https://erisaready365.com/wp-content/uploads/2026/07/ERISA-READY-365-With-1-tm-bottom-BOLD-TAG.webp';
   var LOGOUT_URL = '/users/x202vq/logout';
   var USER = window.ER365_USER || {};
   var STEP = parseInt(window.ER365_FN_STEP || 1, 10);
@@ -45,18 +42,15 @@
   var PCT = Math.round((STEP / TOTAL) * 100);
 
   var CSS = [
-    '.er365-fn-hdr { font-family: Calibri, "Segoe UI", Arial, sans-serif; color: #002855; margin-bottom: 16px; padding: 18px 24px; }',
-    '.er365-fn-hdr-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }',
-    '.er365-fn-hdr-brand img { height: 140px; width: auto; display: block; }',
-    '.er365-fn-hdr-user { font-size: 15px; color: #3363AD; text-align: right; font-weight: 500; }',
-    '.er365-fn-hdr-user strong { color: #002855; font-weight: 700; }',
-    '.er365-fn-hdr-user a { color: #b0392f; text-decoration: none; margin-left: 14px; font-weight: 700; font-size: 15px; }',
+    '.er365-fn-hdr { font-family: Calibri, "Segoe UI", Arial, sans-serif; color: #002855; margin-bottom: 16px; padding: 14px 20px; }',
+    '.er365-fn-hdr-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }',
+    '.er365-fn-hdr-brand img { height: 110px; width: auto; display: block; }',
+    '.er365-fn-hdr-user { font-size: 13px; color: #3363AD; text-align: right; font-weight: 400; }',
+    '.er365-fn-hdr-user strong { color: #002855; font-weight: 600; }',
+    '.er365-fn-hdr-user a { color: #b0392f; text-decoration: none; margin-left: 12px; font-weight: 600; font-size: 13px; }',
     '.er365-fn-hdr-user a:hover { text-decoration: underline; }',
     '.er365-fn-hdr-progress-track { width: 100%; background: #002855; border-radius: 25px; padding: 10px 0; display: flex; align-items: center; }',
     '.er365-fn-hdr-progress-pill { width: ' + PCT + '%; min-width: 110px; height: 50px; background: #3363AD; border-radius: 50px; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 15px; font-weight: 700; font-family: Arial, sans-serif; text-shadow: 0 1px 3px rgba(0,0,0,0.4); transition: width 0.4s ease; letter-spacing: 0.3px; }',
-    '.er365-fn-hdr-poweredby { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 12px; }',
-    '.er365-fn-hdr-poweredby span { font-size: 13px; color: #777; font-style: italic; font-family: Arial, sans-serif; }',
-    '.er365-fn-hdr-poweredby img { height: 35px; width: auto; display: block; }',
     '.er365-fn-hdr-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.35); z-index: 9998; }',
     '.er365-fn-hdr-dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ffffff; padding: 28px 32px; border-radius: 10px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25); z-index: 10001; max-width: 460px; width: calc(100% - 32px); font-family: Calibri, "Segoe UI", Arial, sans-serif; }',
     '.er365-fn-hdr-dialog h3 { margin: 0 0 12px; color: #002855; font-size: 18px; }',
@@ -67,11 +61,10 @@
     '.er365-fn-hdr-btn-secondary { background: #eef2f6; color: #002855; }',
     '.er365-fn-hdr-btn-danger { background: #b0392f; color: #ffffff; }',
     '@media (max-width: 700px) {',
-    '  .er365-fn-hdr { padding: 12px 14px; }',
-    '  .er365-fn-hdr-brand img { height: 90px; }',
-    '  .er365-fn-hdr-poweredby img { height: 40px; }',
-    '  .er365-fn-hdr-user { font-size: 13px; }',
-    '  .er365-fn-hdr-user a { font-size: 13px; margin-left: 10px; }',
+    '  .er365-fn-hdr { padding: 10px 12px; }',
+    '  .er365-fn-hdr-brand img { height: 78px; }',
+    '  .er365-fn-hdr-user { font-size: 12px; }',
+    '  .er365-fn-hdr-user a { font-size: 12px; margin-left: 10px; }',
     '  .er365-fn-hdr-progress-pill { height: 42px; font-size: 13px; min-width: 90px; }',
     '}'
   ].join('\n');
@@ -94,10 +87,6 @@
     pill.textContent = STEP + ' of ' + TOTAL;
     track.appendChild(pill);
     wrap.appendChild(track);
-    var powered = document.createElement('div');
-    powered.className = 'er365-fn-hdr-poweredby';
-    powered.innerHTML = '<span>powered by</span><img src="' + POWERED_BY_URL + '" alt="ERISAReady365">';
-    wrap.appendChild(powered);
     return wrap;
   }
 
@@ -146,13 +135,4 @@
   function boot() {
     if (document.querySelector('.er365-fn-hdr')) return;
     injectStyles();
-    var header = buildHeader();
-    var root = document.querySelector('#er365-fn-header-root');
-    if (root) root.parentNode.replaceChild(header, root);
-    else document.body.insertBefore(header, document.body.firstChild);
-    var logout = header.querySelector('.er365-fn-hdr-logout');
-    if (logout) logout.addEventListener('click', function (e) { e.preventDefault(); attemptLogout(); });
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-  else boot();
-})();
+    var header =
