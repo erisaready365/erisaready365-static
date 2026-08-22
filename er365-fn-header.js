@@ -10,8 +10,7 @@
  *   - Log Out link (with in-progress-form guard)
  *   - Timeout redirect guard baked in
  *
- * NO nav bar, NO hamburger, NO avatar dropdown (users navigate via Save/Continue buttons).
- *
+<script src="https://cdn.jsdelivr.net/gh/erisaready365/erisaready365-static@8a0ad1c/er365-fn-header.js"></script> *
  * MOUNT (on each FN AppPage in one HTMLBlock):
  *   <script>
  *     window.ER365_USER = {
