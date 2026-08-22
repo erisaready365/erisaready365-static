@@ -1,15 +1,13 @@
-/* er365-fn-header.js v1.6 */
+/* er365-fn-header.js v1.7 */
 /**
- * v1.6 CHANGES (2026-08-18):
- *   - Welcome/Log Out font down to 16px
- *   - All text (Welcome + name + Log Out) same color (#3363AD light blue)
- *   - Log Out no longer red
- *   - Welcome row aligned to bottom — sits just above progress bar (no more floating)
+ * v1.7 CHANGES (2026-08-18):
+ *   - Welcome/Log Out font: 16px → 18px
+ * TEMPLATE LOCKED — reuse pattern for other Architect apps.
  */
 
 (function () {
   'use strict';
-  try { console.log('%c[ER365] FN Header v1.6 loaded', 'color:#4A7EDE;font-weight:bold'); } catch (e) {}
+  try { console.log('%c[ER365] FN Header v1.7 loaded', 'color:#4A7EDE;font-weight:bold'); } catch (e) {}
 
   (function installTimeoutGuard() {
     if (window.__er365_timeout_installed) return;
@@ -43,13 +41,11 @@
 
   var CSS = [
     '.er365-fn-hdr { font-family: Calibri, "Segoe UI", Arial, sans-serif; color: #002855; margin-bottom: 16px; padding: 14px 20px; }',
-    // KEY CHANGE: align-items: flex-end aligns the welcome text to the BOTTOM of this row, sitting just above the progress bar
     '.er365-fn-hdr-top { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }',
     '.er365-fn-hdr-brand img { height: 127px; width: auto; display: block; }',
-    // All text same light-blue color, 16px
-    '.er365-fn-hdr-user { font-size: 16px; color: #3363AD; text-align: right; font-weight: 400; padding-bottom: 4px; }',
+    '.er365-fn-hdr-user { font-size: 18px; color: #3363AD; text-align: right; font-weight: 400; padding-bottom: 4px; }',
     '.er365-fn-hdr-user strong { color: #3363AD; font-weight: 600; }',
-    '.er365-fn-hdr-user a { color: #3363AD; text-decoration: none; margin-left: 14px; font-weight: 600; font-size: 16px; }',
+    '.er365-fn-hdr-user a { color: #3363AD; text-decoration: none; margin-left: 14px; font-weight: 600; font-size: 18px; }',
     '.er365-fn-hdr-user a:hover { text-decoration: underline; }',
     '.er365-fn-hdr-progress-track { width: 100%; background: #002855; border-radius: 25px; padding: 10px 0; display: flex; align-items: center; }',
     '.er365-fn-hdr-progress-pill { width: ' + PCT + '%; min-width: 110px; height: 50px; background: #3363AD; border-radius: 50px; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 15px; font-weight: 700; font-family: Arial, sans-serif; text-shadow: 0 1px 3px rgba(0,0,0,0.4); transition: width 0.4s ease; letter-spacing: 0.3px; }',
@@ -65,8 +61,8 @@
     '@media (max-width: 700px) {',
     '  .er365-fn-hdr { padding: 10px 12px; }',
     '  .er365-fn-hdr-brand img { height: 90px; }',
-    '  .er365-fn-hdr-user { font-size: 14px; }',
-    '  .er365-fn-hdr-user a { font-size: 14px; margin-left: 10px; }',
+    '  .er365-fn-hdr-user { font-size: 15px; }',
+    '  .er365-fn-hdr-user a { font-size: 15px; margin-left: 10px; }',
     '  .er365-fn-hdr-progress-pill { height: 42px; font-size: 13px; min-width: 90px; }',
     '}'
   ].join('\n');
