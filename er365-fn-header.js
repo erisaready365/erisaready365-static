@@ -2,8 +2,8 @@
 /**
  * ERISAReady365 — Fiduciary Navigator App Header (v1.3)
  * v1.3 CHANGES (2026-08-18):
- *   - Bigger FN logo (140px, matches old header)
- *   - Bigger powered-by logo (55px), below progress bar
+ *   - Bigger FN logo (110px, matches old header)
+ *   - Bigger powered-by logo (35px), below progress bar
  *   - Larger welcome/logout font (15px, more weight)
  *   - Bolder pill text with text-shadow for readability
  */
@@ -56,7 +56,7 @@
     '.er365-fn-hdr-progress-pill { width: ' + PCT + '%; min-width: 110px; height: 50px; background: #3363AD; border-radius: 50px; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 15px; font-weight: 700; font-family: Arial, sans-serif; text-shadow: 0 1px 3px rgba(0,0,0,0.4); transition: width 0.4s ease; letter-spacing: 0.3px; }',
     '.er365-fn-hdr-poweredby { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 12px; }',
     '.er365-fn-hdr-poweredby span { font-size: 13px; color: #777; font-style: italic; font-family: Arial, sans-serif; }',
-    '.er365-fn-hdr-poweredby img { height: 55px; width: auto; display: block; }',
+    '.er365-fn-hdr-poweredby img { height: 35px; width: auto; display: block; }',
     '.er365-fn-hdr-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.35); z-index: 9998; }',
     '.er365-fn-hdr-dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ffffff; padding: 28px 32px; border-radius: 10px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25); z-index: 10001; max-width: 460px; width: calc(100% - 32px); font-family: Calibri, "Segoe UI", Arial, sans-serif; }',
     '.er365-fn-hdr-dialog h3 { margin: 0 0 12px; color: #002855; font-size: 18px; }',
