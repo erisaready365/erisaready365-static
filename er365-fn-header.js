@@ -1,14 +1,12 @@
-/* er365-fn-header.js v1.7 */
+/* er365-fn-header.js v1.9 */
 /**
- * v1.7 CHANGES (2026-08-18):
- *   - Welcome/Log Out font: 16px → 18px
- * TEMPLATE LOCKED — reuse pattern for other Architect apps.
+ * v1.8 CHANGES (2026-08-18):
+ *   - Added navy pipe "|" separator between user name and Log Out
  */
 
 (function () {
   'use strict';
-  try { console.log('%c[ER365] FN Header v1.7 loaded', 'color:#4A7EDE;font-weight:bold'); } catch (e) {}
-
+try { console.log('%c[ER365] FN Header v1.9 loaded', 'color:#4A7EDE;font-weight:bold'); } catch (e) {}
   (function installTimeoutGuard() {
     if (window.__er365_timeout_installed) return;
     window.__er365_timeout_installed = true;
@@ -32,7 +30,7 @@
     });
   })();
 
-  var FN_LOGO_URL = 'https://erisaready365.com/wp-content/uploads/2026/08/Fiduciary-Navigator-Bold-Large-lg-font-longated-scaled.webp';
+  var FN_LOGO_URL = 'var FN_LOGO_URL = 'https://erisaready365.com/wp-content/uploads/2026/08/Fiduciary-Navigator-Bold-Large-lg-font-longated-scaled.webp';';
   var LOGOUT_URL = '/users/x202vq/logout';
   var USER = window.ER365_USER || {};
   var STEP = parseInt(window.ER365_FN_STEP || 1, 10);
@@ -45,7 +43,8 @@
     '.er365-fn-hdr-brand img { height: 127px; width: auto; display: block; }',
     '.er365-fn-hdr-user { font-size: 18px; color: #3363AD; text-align: right; font-weight: 400; padding-bottom: 4px; }',
     '.er365-fn-hdr-user strong { color: #3363AD; font-weight: 600; }',
-    '.er365-fn-hdr-user a { color: #3363AD; text-decoration: none; margin-left: 14px; font-weight: 600; font-size: 18px; }',
+    '.er365-fn-hdr-user .er365-fn-hdr-sep { color: #002855; font-weight: 400; margin: 0 10px; }',
+    '.er365-fn-hdr-user a { color: #3363AD; text-decoration: none; font-weight: 600; font-size: 18px; }',
     '.er365-fn-hdr-user a:hover { text-decoration: underline; }',
     '.er365-fn-hdr-progress-track { width: 100%; background: #002855; border-radius: 25px; padding: 10px 0; display: flex; align-items: center; }',
     '.er365-fn-hdr-progress-pill { width: ' + PCT + '%; min-width: 110px; height: 50px; background: #3363AD; border-radius: 50px; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 15px; font-weight: 700; font-family: Arial, sans-serif; text-shadow: 0 1px 3px rgba(0,0,0,0.4); transition: width 0.4s ease; letter-spacing: 0.3px; }',
@@ -62,7 +61,8 @@
     '  .er365-fn-hdr { padding: 10px 12px; }',
     '  .er365-fn-hdr-brand img { height: 90px; }',
     '  .er365-fn-hdr-user { font-size: 15px; }',
-    '  .er365-fn-hdr-user a { font-size: 15px; margin-left: 10px; }',
+    '  .er365-fn-hdr-user a { font-size: 15px; }',
+    '  .er365-fn-hdr-user .er365-fn-hdr-sep { margin: 0 8px; }',
     '  .er365-fn-hdr-progress-pill { height: 42px; font-size: 13px; min-width: 90px; }',
     '}'
   ].join('\n');
@@ -76,7 +76,11 @@
     top.className = 'er365-fn-hdr-top';
     top.innerHTML =
       '<div class="er365-fn-hdr-brand"><img src="' + FN_LOGO_URL + '" alt="Fiduciary Navigator"></div>' +
-      '<div class="er365-fn-hdr-user">Welcome, <strong>' + safe(USER.name, 'User') + '</strong><a href="#" class="er365-fn-hdr-logout">Log Out</a></div>';
+      '<div class="er365-fn-hdr-user">' +
+        'Welcome, <strong>' + safe(USER.name, 'User') + '</strong>' +
+        '<span class="er365-fn-hdr-sep">|</span>' +
+        '<a href="#" class="er365-fn-hdr-logout">Log Out</a>' +
+      '</div>';
     wrap.appendChild(top);
     var track = document.createElement('div');
     track.className = 'er365-fn-hdr-progress-track';
