@@ -32,7 +32,7 @@
     });
   })();
 
-  var FN_LOGO_URL = 'https://erisaready365.com/wp-content/uploads/2026/08/Fiduciary-Navigator-Bold-Large-lg-font-scaled.webp';
+  var FN_LOGO_URL = 'https://erisaready365.com/wp-content/uploads/2026/08/Fiduciary-Navigator-Bold-Large-lg-font-longated-scaled.webp';
   var LOGOUT_URL = '/users/x202vq/logout';
   var USER = window.ER365_USER || {};
   var STEP = parseInt(window.ER365_FN_STEP || 1, 10);
