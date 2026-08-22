@@ -1,12 +1,16 @@
 /* er365-fn-header.js v1.9 */
 /**
- * v1.8 CHANGES (2026-08-18):
- *   - Added navy pipe "|" separator between user name and Log Out
+ * ERISAReady365 — Fiduciary Navigator App Header
+ * v1.9 (2026-08-18) — new elongated webp logo
+ * Timeout guard baked in. Nested-pill progress bar. Save-draft logout dialog.
+ * (c) 2026 RetireWell, LLC. Confidential — Internal Use Only.
  */
 
 (function () {
   'use strict';
-try { console.log('%c[ER365] FN Header v1.9 loaded', 'color:#4A7EDE;font-weight:bold'); } catch (e) {}
+  try { console.log('%c[ER365] FN Header v1.9 loaded', 'color:#4A7EDE;font-weight:bold'); } catch (e) {}
+
+  // ---------- Timeout guard ----------
   (function installTimeoutGuard() {
     if (window.__er365_timeout_installed) return;
     window.__er365_timeout_installed = true;
@@ -28,8 +32,10 @@ try { console.log('%c[ER365] FN Header v1.9 loaded', 'color:#4A7EDE;font-weight:
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'visible') { check(); bump(); }
     });
+    try { console.log('%c[ER365] Timeout guard installed — idle ' + (IDLE_LIMIT_MS / 60000) + ' min → ' + REDIRECT_URL, 'color:#4A7EDE'); } catch (e) {}
   })();
 
+  // ---------- Config ----------
   var FN_LOGO_URL = 'https://erisaready365.com/wp-content/uploads/2026/08/Fiduciary-Navigator-Bold-Large-lg-font-longated-scaled.webp';
   var LOGOUT_URL = '/users/x202vq/logout';
   var USER = window.ER365_USER || {};
@@ -37,6 +43,7 @@ try { console.log('%c[ER365] FN Header v1.9 loaded', 'color:#4A7EDE;font-weight:
   var TOTAL = parseInt(window.ER365_FN_TOTAL || 10, 10);
   var PCT = Math.round((STEP / TOTAL) * 100);
 
+  // ---------- Styles ----------
   var CSS = [
     '.er365-fn-hdr { font-family: Calibri, "Segoe UI", Arial, sans-serif; color: #002855; margin-bottom: 16px; padding: 14px 20px; }',
     '.er365-fn-hdr-top { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }',
@@ -67,6 +74,7 @@ try { console.log('%c[ER365] FN Header v1.9 loaded', 'color:#4A7EDE;font-weight:
     '}'
   ].join('\n');
 
+  // ---------- Build ----------
   function safe(v, fallback) { return (!v || String(v).indexOf('[@') === 0) ? (fallback || '') : v; }
 
   function buildHeader() {
@@ -92,6 +100,7 @@ try { console.log('%c[ER365] FN Header v1.9 loaded', 'color:#4A7EDE;font-weight:
     return wrap;
   }
 
+  // ---------- Logout dialog ----------
   function attemptLogout() {
     var backdrop = document.createElement('div');
     backdrop.className = 'er365-fn-hdr-backdrop';
@@ -127,6 +136,7 @@ try { console.log('%c[ER365] FN Header v1.9 loaded', 'color:#4A7EDE;font-weight:
   }
   function performLogout() { window.location.href = LOGOUT_URL; }
 
+  // ---------- Boot ----------
   function injectStyles() {
     if (document.querySelector('style[data-er365-fn-hdr]')) return;
     var s = document.createElement('style');
