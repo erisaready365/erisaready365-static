@@ -1,14 +1,12 @@
-/* er365-fn-header.js v1.9 */
+/* er365-fn-header.js v2.0 */
 /**
  * ERISAReady365 — Fiduciary Navigator App Header
- * v1.9 (2026-08-18) — new elongated webp logo
- * Timeout guard baked in. Nested-pill progress bar. Save-draft logout dialog.
- * (c) 2026 RetireWell, LLC. Confidential — Internal Use Only.
+ * v2.0 (2026-08-18) — logo -20% (127→102px), welcome/logout text -10% (18→16px)
  */
 
 (function () {
   'use strict';
-  try { console.log('%c[ER365] FN Header v1.9 loaded', 'color:#4A7EDE;font-weight:bold'); } catch (e) {}
+  try { console.log('%c[ER365] FN Header v2.0 loaded', 'color:#4A7EDE;font-weight:bold'); } catch (e) {}
 
   // ---------- Timeout guard ----------
   (function installTimeoutGuard() {
@@ -47,11 +45,11 @@
   var CSS = [
     '.er365-fn-hdr { font-family: Calibri, "Segoe UI", Arial, sans-serif; color: #002855; margin-bottom: 16px; padding: 14px 20px; }',
     '.er365-fn-hdr-top { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }',
-    '.er365-fn-hdr-brand img { height: 127px; width: auto; display: block; }',
-    '.er365-fn-hdr-user { font-size: 18px; color: #3363AD; text-align: right; font-weight: 400; padding-bottom: 4px; }',
+    '.er365-fn-hdr-brand img { height: 102px; width: auto; display: block; }',
+    '.er365-fn-hdr-user { font-size: 16px; color: #3363AD; text-align: right; font-weight: 400; padding-bottom: 4px; }',
     '.er365-fn-hdr-user strong { color: #3363AD; font-weight: 600; }',
     '.er365-fn-hdr-user .er365-fn-hdr-sep { color: #002855; font-weight: 400; margin: 0 10px; }',
-    '.er365-fn-hdr-user a { color: #3363AD; text-decoration: none; font-weight: 600; font-size: 18px; }',
+    '.er365-fn-hdr-user a { color: #3363AD; text-decoration: none; font-weight: 600; font-size: 16px; }',
     '.er365-fn-hdr-user a:hover { text-decoration: underline; }',
     '.er365-fn-hdr-progress-track { width: 100%; background: #002855; border-radius: 25px; padding: 10px 0; display: flex; align-items: center; }',
     '.er365-fn-hdr-progress-pill { width: ' + PCT + '%; min-width: 110px; height: 50px; background: #3363AD; border-radius: 50px; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 15px; font-weight: 700; font-family: Arial, sans-serif; text-shadow: 0 1px 3px rgba(0,0,0,0.4); transition: width 0.4s ease; letter-spacing: 0.3px; }',
@@ -66,9 +64,9 @@
     '.er365-fn-hdr-btn-danger { background: #b0392f; color: #ffffff; }',
     '@media (max-width: 700px) {',
     '  .er365-fn-hdr { padding: 10px 12px; }',
-    '  .er365-fn-hdr-brand img { height: 90px; }',
-    '  .er365-fn-hdr-user { font-size: 15px; }',
-    '  .er365-fn-hdr-user a { font-size: 15px; }',
+    '  .er365-fn-hdr-brand img { height: 72px; }',
+    '  .er365-fn-hdr-user { font-size: 14px; }',
+    '  .er365-fn-hdr-user a { font-size: 14px; }',
     '  .er365-fn-hdr-user .er365-fn-hdr-sep { margin: 0 8px; }',
     '  .er365-fn-hdr-progress-pill { height: 42px; font-size: 13px; min-width: 90px; }',
     '}'
