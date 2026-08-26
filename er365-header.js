@@ -1,4 +1,4 @@
-/* er365-header.js v4.19 */
+/* er365-header.js v4.20 */
 /**
  * ERISAReady365 Header Component (v4.19)
  * =====================================
@@ -205,7 +205,7 @@
 (function () {
   'use strict';
 
-  try { console.log('%c[ER365] Header v4.19 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
+  try { console.log('%c[ER365] Header v4.20 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
 
   // ---------------------------------------------------------
   // CONFIGURATION
@@ -219,7 +219,8 @@
 
   var LOGOUT_URL = CFG.logoutUrl || '/users/x202vq/logout';
   var AFTER_LOGOUT_URL = CFG.afterLogoutUrl || 'https://erisaready365.com';  // v4.17: where to land after full logout
-  var IDLE_TIMEOUT_MS  = CFG.idleTimeoutMs  || (2 * 60 * 60 * 1000);         // v4.18: 2h matches Caspio Flex session default
+  var IDLE_TIMEOUT_MS  = CFG.idleTimeoutMs  || (60 * 60 * 1000);              // v4.20: 60min — safety buffer vs Caspio server timeout
+  var KEEP_ALIVE_MS    = CFG.keepAliveMs    || (20 * 60 * 1000);              // v4.20: ping Caspio every 20min to keep session alive
   var PROFILE_PAGE = CFG.profilePage || 'my-account';
   var ACCOUNT_PAGE = CFG.accountPage || 'my-account';
 
@@ -480,6 +481,8 @@
     '  flex: 1; border: none; width: 100%; height: 100%;',
     '  background: #ffffff;',
     '}',
+    // v4.20: hide Caspio Flex dropdown clear-value X icon (global)
+    '#clear-icon { display: none !important; }',
     '@media (max-width: 600px) {',
     '  .er365-hdr-modal { width: 100vw; height: 100vh; max-height: 100vh; border-radius: 0; }',
     '}',
@@ -1346,6 +1349,21 @@
         performLogout();
       }
     }, checkIntervalMs);
+
+    // v4.20: keep-alive ping — refresh Caspio session cookie every KEEP_ALIVE_MS while user is present
+    setInterval(function () {
+      try {
+        fetch(window.location.pathname + (window.location.search || ''), {
+          method: 'HEAD',
+          credentials: 'include',
+          cache: 'no-store'
+        }).catch(function () { /* silent */ });
+      } catch (e) { /* fetch not supported — silent fail */ }
+    }, KEEP_ALIVE_MS);
+
+    try {
+      console.log('%c[ER365] Idle watcher — ' + (IDLE_TIMEOUT_MS / 60000) + ' min limit; keep-alive every ' + (KEEP_ALIVE_MS / 60000) + ' min', 'color:#4A7EDE');
+    } catch (e) {}
   }
 
   function boot() {
