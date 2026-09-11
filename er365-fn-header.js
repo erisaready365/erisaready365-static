@@ -1,135 +1,215 @@
-/* er365-fn-header.js v2.2 */
-/**
- * v2.2 (2026-08-18):
- *   - Restored console.log confirmation for timeout guard install
- *   - Lowered timeout to 60 min (safety buffer)
- *   - Check interval bumped 60s → 30s (beats server-side timers more reliably)
- *   - Added keep-alive ping every 20 min to refresh Caspio server session cookie
- */
+// v2.3 — three-step hard exit, matching er365-header.js v4.17.
+    // A plain redirect leaves the Caspio server session alive, so the
+    // next login resumes the page the user timed out from.
+    function hardExit(reason) {
+      if (window.__er365_exiting) return;
+      window.__er365_exiting = true;
+      try { console.warn('[ER365] Hard exit — ' + reason); } catch (e) {}
 
-(function () {
-  'use strict';
-  try { console.log('%c[ER365] FN Header v2.2 loaded', 'color:#4A7EDE;font-weight:bold'); } catch (e) {}
+      // 1. clear client-side state
+      try { localStorage.clear(); }   catch (e) {}
+      try { sessionStorage.clear(); } catch (e) {}
 
-  (function installTimeoutGuard() {
-    if (window.__er365_timeout_installed) return;
-    window.__er365_timeout_installed = true;
-    var cfg = window.ER365_TIMEOUT_CFG || {};
-    var IDLE_LIMIT_MS = cfg.idleLimitMs || 60 * 60 * 1000;       // 60 min idle → redirect
-    var CHECK_INTERVAL_MS = 30 * 1000;                            // Check every 30s (was 60s)
-    var KEEP_ALIVE_MS = cfg.keepAliveMs || 20 * 60 * 1000;        // Ping Caspio every 20 min
-    var REDIRECT_URL = cfg.redirectUrl || 'https://erisaready365.com/';
-    var STORAGE_KEY = 'er365_last_activity';
-    var lastActivity = Date.now();
+      // 3. navigate away (runs once, whichever path gets there first)
+      var navigated = false;
+      function go() {
+        if (navigated) return;
+        navigated = true;
+        var sep = REDIRECT_URL.indexOf('?') > -1 ? '&' : '?';
+        window.location.replace(REDIRECT_URL + sep + 'er365=' + Date.now());
+      }
 
-    function bump() {
-      lastActivity = Date.now();
-      try { localStorage.setItem(STORAGE_KEY, lastActivity); } catch (e) {}
+      // 2. kill the server session via a hidden iframe, then go
+      try {
+        var f = document.createElement('iframe');
+        f.style.cssText = 'position:absolute;left:-9999px;top:-9999px;' +
+                          'width:1px;height:1px;border:0;';
+        f.onload  = go;
+        f.onerror = go;
+        f.src = LOGOUT_URL;
+        (document.body || document.documentElement).appendChild(f);
+        setTimeout(go, 1500);   // never wait longer than this
+      } catch (e) {
+        go();
+      }
     }
-    bump();
 
-    // Activity listeners — reset idle timer on any user interaction
-    ['mousemove','keydown','click','scroll','touchstart'].forEach(function (evt) {
-      document.addEventListener(evt, bump, { passive: true });
-    });
-
-    // Idle check — redirect if user has been inactive too long
     function check() {
       var stored = parseInt(localStorage.getItem(STORAGE_KEY) || String(lastActivity), 10);
-      if (Date.now() - stored > IDLE_LIMIT_MS) {
-        window.location.href = REDIRECT_URL;
+      var idleMs = Date.now() - stored;
+      if (idleMs > IDLE_LIMIT_MS) {
+        hardExit('idle ' + Math.round(idleMs / 1000) + 's (limit ' +
+                 Math.round(IDLE_LIMIT_MS / 1000) + 's)');
       }
     }
-    setInterval(check, CHECK_INTERVAL_MS);
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    // Tab-focus recovery — catch throttled setInterval on background tabs
-    document.addEventListener('visibilitychange', function () {
-      if (document.visibilityState === 'visible') {
-        check();
-        bump();
+NOTE ON localStorage.clear()
+  This wipes er365_last_activity along with everything else. That is
+  intentional and harmless — the page is navigating away, and a fresh
+  login re-seeds it. It also wipes the jump-back breadcrumb
+  (er365_jump), which is correct: after a timeout there is nothing
+  to return to.
+
+NOTE ON LOGOUT_URL
+  x202vq is the ERISAReady365 Caspio auth realm. If you ever change
+  realms, set window.ER365_TIMEOUT_CFG = { logoutUrl: '/users/<realm>/logout' }
+  in the mount block rather than editing this file.
+
+
+=============================================================
+PATCH 2 — GENERIC MULTI-SELECT MANAGER
+=============================================================
+
+WHERE:  immediately AFTER the closing of installTimeoutGuard() —
+        that is, after the line
+
+    })();
+
+        that ends the timeout IIFE, and BEFORE the line
+
+    var FN_LOGO_URL = 'https://erisaready365.com/wp-content/uploads/...
+
+ADD everything between the dashed lines:
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // ============================================================
+  // v2.3 — GENERIC MULTI-SELECT MANAGER
+  // Self-discovering: finds any _Virtual_<Q_ID>_<Option_ID> checkbox
+  // on whatever page it runs on. Repopulates them from the parent
+  // Hidden field on load, and aggregates them back to a comma-wrapped
+  // string on every change.
+  //
+  // REQUIRES, per page and per multi-select question: the parent
+  // question must exist on the form as a HIDDEN form element named
+  // for its Q_ID. If it does not, this logs a warning naming the
+  // field and does nothing for it.
+  //
+  // Set window.ER365_MULTI_DEBUG = true in a page's mount block for
+  // per-option logging while troubleshooting.
+  // ============================================================
+  (function installMultiSelect() {
+    if (window.__er365_multi_installed) return;
+    window.__er365_multi_installed = true;
+
+    var DEBUG = !!window.ER365_MULTI_DEBUG;
+    function log(msg) { if (DEBUG) { try { console.log('[MULTI] ' + msg); } catch (e) {} } }
+    function warn(msg) { try { console.warn('[MULTI] ' + msg); } catch (e) {} }
+
+    function findParentInput(fieldName) {
+      return document.querySelector(
+        'input[id^="' + fieldName + '-"]:not([id^="_Virtual"]),' +
+        'textarea[id^="' + fieldName + '-"]:not([id^="_Virtual"])'
+      );
+    }
+
+    function virtualsFor(fieldName) {
+      return document.querySelectorAll(
+        'input[type="checkbox"][id^="_Virtual_' + fieldName + '_"]'
+      );
+    }
+
+    function discoverFields() {
+      var seen = {}, out = [];
+      var all = document.querySelectorAll('input[type="checkbox"][id^="_Virtual_"]');
+      for (var i = 0; i < all.length; i++) {
+        var m = all[i].id.match(/^_Virtual_([A-Za-z0-9_]+?)_(\d+)-/);
+        if (m && !seen[m[1]]) { seen[m[1]] = true; out.push(m[1]); }
       }
-    });
+      return out;
+    }
 
-    // Keep-alive ping — refresh Caspio session cookie while user is present
-    // HEAD request to current page, sends cookies, minimal bandwidth
-    function keepAlivePing() {
+    function optionIdOf(el) {
+      var m = el.id.match(/_(\d+)-[^_]*$/);
+      return m ? m[1] : null;
+    }
+
+    function aggregate(fieldName) {
+      var ids = [], v = virtualsFor(fieldName);
+      for (var i = 0; i < v.length; i++) {
+        var id = optionIdOf(v[i]);
+        if (id && v[i].checked) ids.push(id);
+      }
+      return ids.length ? ',' + ids.join(',') + ',' : '';
+    }
+
+    // Text inputs: React reads the native value setter, so use it.
+    function setInputValue(input, value) {
       try {
-        fetch(window.location.pathname + (window.location.search || ''), {
-          method: 'HEAD',
-          credentials: 'include',
-          cache: 'no-store'
-        }).catch(function () { /* silent */ });
-      } catch (e) { /* fetch not supported — silent fail */ }
+        var s = Object.getOwnPropertyDescriptor(
+                  window.HTMLInputElement.prototype, 'value').set;
+        s.call(input, value);
+      } catch (e) { input.value = value; }
+      input.dispatchEvent(new Event('input',  { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
     }
-    setInterval(keepAlivePing, KEEP_ALIVE_MS);
+
+    // Checkboxes: .click() first — React ignores the native checked
+    // setter. Fall back to the setter only if the click did not take.
+    function setChecked(input, want) {
+      if (input.checked === want) return;
+      try { input.click(); } catch (e) {}
+      if (input.checked !== want) {
+        try {
+          var s = Object.getOwnPropertyDescriptor(
+                    window.HTMLInputElement.prototype, 'checked').set;
+          s.call(input, want);
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        } catch (e) {}
+      }
+    }
+
+    function repopulate() {
+      discoverFields().forEach(function (field) {
+        var parent = findParentInput(field);
+        if (!parent) {
+          warn('no parent input for ' + field +
+               ' — add ' + field + ' as a Hidden form element on this page');
+          return;
+        }
+        var stored = parent.value || '';
+        log(field + ' stored="' + stored + '"');
+        var v = virtualsFor(field);
+        for (var i = 0; i < v.length; i++) {
+          var id = optionIdOf(v[i]);
+          if (!id) continue;
+          var want = stored.indexOf(',' + id + ',') !== -1;
+          if (want !== v[i].checked) {
+            setChecked(v[i], want);
+            log((want ? 'checked ' : 'unchecked ') + 'option ' + id + ' on ' + field);
+          }
+        }
+      });
+    }
+
+    function attachAggregation() {
+      discoverFields().forEach(function (field) {
+        var parent = findParentInput(field);
+        if (!parent) return;
+        var v = virtualsFor(field);
+        for (var i = 0; i < v.length; i++) {
+          if (v[i].dataset.er365Agg) continue;
+          v[i].dataset.er365Agg = '1';
+          v[i].addEventListener('change', function () {
+            var out = aggregate(field);
+            setInputValue(parent, out);
+            log(field + ' aggregated to "' + out + '"');
+          });
+        }
+      });
+    }
+
+    function pass() { repopulate(); attachAggregation(); }
+
+    // Flex renders in phases; these are retries, not duplicates —
+    // the dataset guard above makes re-attachment a no-op.
+    pass();
+    setTimeout(pass, 250);
+    setTimeout(pass, 1000);
+    setTimeout(pass, 2000);
 
     try {
-      console.log('%c[ER365] Timeout guard installed — idle ' + (IDLE_LIMIT_MS / 60000) + ' min → ' + REDIRECT_URL, 'color:#4A7EDE');
-      console.log('%c[ER365] Keep-alive ping every ' + (KEEP_ALIVE_MS / 60000) + ' min', 'color:#4A7EDE');
+      console.log('%c[ER365] Multi-select manager v2.3 installed',
+                  'color:#4A7EDE');
     } catch (e) {}
   })();
-
-  var FN_LOGO_URL = 'https://erisaready365.com/wp-content/uploads/2026/08/Fiduciary-Navigator-Bold-Large-lg-font-longated-scaled.webp';
-  var USER = window.ER365_USER || {};
-  var STEP = parseInt(window.ER365_FN_STEP || 1, 10);
-  var TOTAL = parseInt(window.ER365_FN_TOTAL || 10, 10);
-  var PCT = Math.round((STEP / TOTAL) * 100);
-
-  var CSS = [
-    '.er365-fn-hdr { font-family: Calibri, "Segoe UI", Arial, sans-serif; color: #002855; margin-bottom: 16px; padding: 14px 20px; }',
-    '.er365-fn-hdr-top { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }',
-    '.er365-fn-hdr-brand img { height: 102px; width: auto; display: block; }',
-    '.er365-fn-hdr-user { font-size: 16px; color: #3363AD; text-align: right; font-weight: 400; padding-bottom: 4px; }',
-    '.er365-fn-hdr-user strong { color: #3363AD; font-weight: 600; }',
-    '.er365-fn-hdr-progress-track { width: 100%; background: #002855; border-radius: 25px; padding: 10px 0; display: flex; align-items: center; }',
-    '.er365-fn-hdr-progress-pill { width: ' + PCT + '%; min-width: 110px; height: 50px; background: #3363AD; border-radius: 50px; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 15px; font-weight: 700; font-family: Arial, sans-serif; text-shadow: 0 1px 3px rgba(0,0,0,0.4); transition: width 0.4s ease; letter-spacing: 0.3px; }',
-    '#clear-icon { display: none !important; }',
-    '@media (max-width: 700px) {',
-    '  .er365-fn-hdr { padding: 10px 12px; }',
-    '  .er365-fn-hdr-brand img { height: 72px; }',
-    '  .er365-fn-hdr-user { font-size: 14px; }',
-    '  .er365-fn-hdr-progress-pill { height: 42px; font-size: 13px; min-width: 90px; }',
-    '}'
-  ].join('\n');
-
-  function safe(v, fallback) { return (!v || String(v).indexOf('[@') === 0) ? (fallback || '') : v; }
-
-  function buildHeader() {
-    var wrap = document.createElement('div');
-    wrap.className = 'er365-fn-hdr';
-    var top = document.createElement('div');
-    top.className = 'er365-fn-hdr-top';
-    top.innerHTML =
-      '<div class="er365-fn-hdr-brand"><img src="' + FN_LOGO_URL + '" alt="Fiduciary Navigator"></div>' +
-      '<div class="er365-fn-hdr-user">Welcome, <strong>' + safe(USER.name, 'User') + '</strong></div>';
-    wrap.appendChild(top);
-    var track = document.createElement('div');
-    track.className = 'er365-fn-hdr-progress-track';
-    var pill = document.createElement('div');
-    pill.className = 'er365-fn-hdr-progress-pill';
-    pill.textContent = STEP + ' of ' + TOTAL;
-    track.appendChild(pill);
-    wrap.appendChild(track);
-    return wrap;
-  }
-
-  function injectStyles() {
-    if (document.querySelector('style[data-er365-fn-hdr]')) return;
-    var s = document.createElement('style');
-    s.setAttribute('data-er365-fn-hdr', 'true');
-    s.textContent = CSS;
-    document.head.appendChild(s);
-  }
-
-  function boot() {
-    if (document.querySelector('.er365-fn-hdr')) return;
-    injectStyles();
-    var header = buildHeader();
-    var root = document.querySelector('#er365-fn-header-root');
-    if (root) root.parentNode.replaceChild(header, root);
-    else document.body.insertBefore(header, document.body.firstChild);
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-  else boot();
-})();
