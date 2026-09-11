@@ -1,4 +1,4 @@
-  // ============================================================
+  // ===========================================================
   // v2.3 — GENERIC MULTI-SELECT MANAGER
   // Self-discovering: finds any _Virtual_<Q_ID>_<Option_ID> checkbox
   // on whatever page it runs on. Repopulates them from the parent
