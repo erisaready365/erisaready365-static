@@ -1,5 +1,5 @@
   // ===========================================================
-  // v2.3 — GENERIC MULTI-SELECT MANAGER
+  // v2.5 — GENERIC MULTI-SELECT MANAGER
   // Self-discovering: finds any _Virtual_<Q_ID>_<Option_ID> checkbox
   // on whatever page it runs on. Repopulates them from the parent
   // Hidden field on load, and aggregates them back to a comma-wrapped
