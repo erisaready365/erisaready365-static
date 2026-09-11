@@ -1,4 +1,4 @@
-// v2.6 — three-step hard exit, matching er365-header.js v4.17.
+// v2.7 — three-step hard exit, matching er365-header.js v4.17.
     // A plain redirect leaves the Caspio server session alive, so the
     // next login resumes the page the user timed out from.
     function hardExit(reason) {
@@ -42,39 +42,8 @@
                  Math.round(IDLE_LIMIT_MS / 1000) + 's)');
       }
     }
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-NOTE ON localStorage.clear()
-  This wipes er365_last_activity along with everything else. That is
-  intentional and harmless — the page is navigating away, and a fresh
-  login re-seeds it. It also wipes the jump-back breadcrumb
-  (er365_jump), which is correct: after a timeout there is nothing
-  to return to.
-
-NOTE ON LOGOUT_URL
-  x202vq is the ERISAReady365 Caspio auth realm. If you ever change
-  realms, set window.ER365_TIMEOUT_CFG = { logoutUrl: '/users/<realm>/logout' }
-  in the mount block rather than editing this file.
-
-
-=============================================================
-PATCH 2 — GENERIC MULTI-SELECT MANAGER
-=============================================================
-
-WHERE:  immediately AFTER the closing of installTimeoutGuard() —
-        that is, after the line
-
-    })();
-
-        that ends the timeout IIFE, and BEFORE the line
-
-    var FN_LOGO_URL = 'https://erisaready365.com/wp-content/uploads/...
-
-ADD everything between the dashed lines:
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // ============================================================
-  // v2.6 — GENERIC MULTI-SELECT MANAGER
+// ============================================================
+  // v2.7 — GENERIC MULTI-SELECT MANAGER
   // Self-discovering: finds any _Virtual_<Q_ID>_<Option_ID> checkbox
   // on whatever page it runs on. Repopulates them from the parent
   // Hidden field on load, and aggregates them back to a comma-wrapped
@@ -209,7 +178,8 @@ ADD everything between the dashed lines:
     setTimeout(pass, 2000);
 
     try {
-      console.log('%c[ER365] Multi-select manager v2.6 installed',
+      console.log('%c[ER365] Multi-select manager v2.7 installed',
                   'color:#4A7EDE');
     } catch (e) {}
   })();
+
