@@ -1,9 +1,33 @@
-/* er365-header.js v4.20 */
+/* er365-header.js v4.21 */
 /**
- * ERISAReady365 Header Component (v4.19)
+ * ERISAReady365 Header Component (v4.21)
  * =====================================
  *
- * v4.19 CHANGES (2026-07-23) — RACE-CONDITION + IDLE-EVENT FIXES:
+ * v4.21 CHANGES (2026-09-12) - BREADCRUMB TRAIL:
+ *   - Adds a breadcrumb trail to the end of the welcome row, after
+ *     "RetireWell.io | Welcome, <name>". Same font, same size, same
+ *     colour (#3363AD), same pipe separator, same spacing.
+ *   - Two ways to set it:
+ *       (a) AUTOMATIC. Leave it alone. The trail is derived from
+ *           er365-nav-items.js by locating window.ER365_ACTIVE_PAGE
+ *           in the nav tree. A child page yields "Parent | Child";
+ *           a top-level page yields just its own label.
+ *       (b) EXPLICIT. Set window.ER365_CRUMBS in the mount block for
+ *           pages the nav does not know about (detail pages, wizards):
+ *             window.ER365_CRUMBS = [
+ *               { label: 'Fiduciary Navigator Dashboard', page: 'fiduciary-navigator-dashboard' },
+ *               'Archived Attestations'
+ *             ];
+ *           Strings are plain text. Objects with page/url become links.
+ *           The LAST entry is always the current page and never links.
+ *   - Runtime: window.ER365.setCrumbs([...]) re-renders the trail
+ *     without a page reload. window.ER365.refreshCrumbs() re-derives
+ *     it from the nav. Both are safe to call before the header exists.
+ *   - Responsive: below the mobile breakpoint the trail keeps only the
+ *     final crumb, so a long trail cannot push the row off-screen.
+ *   - Nothing else changed. No behaviour in v4.20 was modified.
+ *
+ * v4.19 CHANGES (2026-07-23) - RACE-CONDITION + IDLE-EVENT FIXES:
  *   - Removed 'mousemove' from tracked activity events. It fired
  *     constantly as the cursor drifted → idle timer never expired.
  *     Idle is now defined by: click, keydown, scroll, touchstart.
@@ -205,7 +229,7 @@
 (function () {
   'use strict';
 
-  try { console.log('%c[ER365] Header v4.20 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
+  try { console.log('%c[ER365] Header v4.21 loaded', 'color:#4A7EDE;font-weight:bold'); } catch(e){}
 
   // ---------------------------------------------------------
   // CONFIGURATION
@@ -225,7 +249,8 @@
   var ACCOUNT_PAGE = CFG.accountPage || 'my-account';
 
   var MOBILE_BREAKPOINT_PX = CFG.mobileBreakpointPx || 1500;
-  var USER_INDENT_PX = CFG.userIndentPx != null ? CFG.userIndentPx : 68;  // v4.11: aligns "R" of RetireWell.io with "T" in "The Confidence..." tagline
+  var USER_INDENT_PX = CFG.userIndentPx != null ? CFG.userIndentPx : 68;
+  var LAST_NAV_ITEMS = [];   // v4.21: cached so setCrumbs/refreshCrumbs can re-derive  // v4.11: aligns "R" of RetireWell.io with "T" in "The Confidence..." tagline
 
   var FORM_PAGE_MARKERS = CFG.formPageMarkers || [
     'fiduciary-navigator',
@@ -278,6 +303,12 @@
     '.er365-hdr-company { color: #3363AD; font-weight: 600; }',
     '.er365-hdr-welcome { color: #3363AD; font-weight: 400; }',
     '.er365-hdr-welcome strong { color: #3363AD; font-weight: 400; }',
+    // v4.21: breadcrumb trail - deliberately identical to the welcome text
+    '.er365-hdr-crumbs { display: inline-flex; align-items: center; gap: 14px; min-width: 0; }',
+    '.er365-hdr-crumb { color: #3363AD; font-weight: 400; white-space: nowrap; }',
+    '.er365-hdr-crumb a { color: #3363AD; font-weight: 400; text-decoration: none; border-bottom: 1px solid transparent; }',
+    '.er365-hdr-crumb a:hover { color: #002855; border-bottom-color: #002855; }',
+    '.er365-hdr-crumb-current { color: #3363AD; font-weight: 400; }',
     '.er365-hdr-right { margin-left: auto; display: flex; align-items: center; gap: 20px; }',
     // v4.8: full desktop nav bar is permanently hidden — hamburger is the only entry point
     '.er365-hdr-nav { display: none !important; }',
@@ -493,6 +524,9 @@
     // v4.10: scale user indent with smaller logo
     '  .er365-hdr-user { flex-wrap: wrap; row-gap: 2px; padding-left: ' + Math.round(USER_INDENT_PX * 0.75) + 'px; }',
     '  .er365-hdr-welcome, .er365-hdr-company { white-space: normal; }',
+    // v4.21: a long trail cannot push the row off-screen - keep the current page only
+    '  .er365-hdr-crumbs > *:not(:nth-last-child(-n+1)) { display: none; }',
+    '  .er365-hdr-crumbs { gap: 8px; }',
     '  .er365-hdr-avatar { width: 40px; height: 40px; font-size: 14px; }',
     '  .er365-hdr-right { gap: 14px; }',
     '}',
@@ -960,7 +994,113 @@
   // Build header shell
   // ---------------------------------------------------------
 
+  // ---------------------------------------------------------
+  // v4.21 - Breadcrumb trail
+  // ---------------------------------------------------------
+
+  // Walk the nav tree looking for activePage. Returns [] when not found,
+  // [parent, child] for a child page, [item] for a top-level page.
+  function crumbTrailFromNav(navItems, activePage) {
+    if (!activePage) return [];
+    var items = nestNav(navItems || []);   // nestNav already applies filterByContext
+    for (var i = 0; i < items.length; i++) {
+      var parent = items[i];
+      if (!userCanSee(parent)) continue;
+      var kids = (parent.children || []).filter(userCanSee);
+      for (var j = 0; j < kids.length; j++) {
+        if (isActive(kids[j], activePage)) {
+          return [
+            { label: parent.label, page: (kids.length ? '' : itemUrl(parent)) },
+            { label: kids[j].label }
+          ];
+        }
+      }
+      if (isActive(parent, activePage)) return [{ label: parent.label }];
+    }
+    return [];
+  }
+
+  // Accepts strings and {label, page|url} objects. Returns clean objects.
+  function normalizeCrumbs(raw) {
+    if (!raw) return [];
+    var list = Array.isArray(raw) ? raw : [raw];
+    var out = [];
+    for (var i = 0; i < list.length; i++) {
+      var c = list[i];
+      if (c == null) continue;
+      if (typeof c === 'string') {
+        if (c.trim()) out.push({ label: c.trim(), page: '' });
+        continue;
+      }
+      var label = safeText(c.label || c.text || c.title, '');
+      if (!label) continue;
+      out.push({ label: label, page: c.page || c.url || '' });
+    }
+    return out;
+  }
+
+  function resolveCrumbs(navItems) {
+    var explicit = normalizeCrumbs(window.ER365_CRUMBS);
+    if (explicit.length) return explicit;
+    var derived = normalizeCrumbs(crumbTrailFromNav(navItems, detectActivePage()));
+    if (derived.length) return derived;
+    // Home context has no plan nav to derive from, so name it explicitly.
+    // Override with CFG.homeCrumbLabel, or '' to show nothing.
+    if ((window.ER365_CONTEXT || 'plan').toLowerCase() === 'home') {
+      var homeLabel = CFG.homeCrumbLabel != null ? CFG.homeCrumbLabel : 'Home';
+      if (homeLabel) return [{ label: homeLabel, page: '' }];
+    }
+    return [];
+  }
+
+  function buildCrumbs(navItems) {
+    var wrap = document.createElement('span');
+    wrap.className = 'er365-hdr-crumbs';
+    wrap.setAttribute('aria-label', 'Breadcrumb');
+
+    var crumbs = resolveCrumbs(navItems);
+    if (!crumbs.length) return wrap;
+
+    for (var i = 0; i < crumbs.length; i++) {
+      var sep = document.createElement('span');
+      sep.className = 'er365-hdr-sep';
+      sep.textContent = '|';
+      wrap.appendChild(sep);
+
+      var isLast = (i === crumbs.length - 1);
+      var crumb = document.createElement('span');
+      crumb.className = 'er365-hdr-crumb' + (isLast ? ' er365-hdr-crumb-current' : '');
+
+      if (!isLast && crumbs[i].page) {
+        var a = document.createElement('a');
+        a.href = '#';
+        a.textContent = crumbs[i].label;
+        a.setAttribute('data-page', String(crumbs[i].page).toLowerCase());
+        (function (target) {
+          a.addEventListener('click', function (e) { e.preventDefault(); navigateTo(target); });
+        })(crumbs[i].page);
+        crumb.appendChild(a);
+      } else {
+        crumb.textContent = crumbs[i].label;
+        if (isLast) crumb.setAttribute('aria-current', 'page');
+      }
+      wrap.appendChild(crumb);
+    }
+    return wrap;
+  }
+
+  // Re-render the trail in place. Safe to call before the header exists.
+  function renderCrumbs() {
+    var host = document.querySelector('#er365-header .er365-hdr-user');
+    if (!host) return;
+    var old = host.querySelector('.er365-hdr-crumbs');
+    var fresh = buildCrumbs(LAST_NAV_ITEMS);
+    if (old) host.replaceChild(fresh, old);
+    else host.appendChild(fresh);
+  }
+
   function buildHeader(navItems) {
+    LAST_NAV_ITEMS = navItems;
     var user = window.ER365_USER || {};
     var name = safeText(user.name, 'User');
     var company = safeText(user.company, '');
@@ -1013,6 +1153,9 @@
     welcome.innerHTML = 'Welcome, <strong></strong>';
     welcome.querySelector('strong').textContent = name;
     userGroup.appendChild(welcome);
+
+    // v4.21: breadcrumb trail sits at the end of the same row
+    userGroup.appendChild(buildCrumbs(navItems));
 
     left.appendChild(userGroup);
     header.appendChild(left);
@@ -1161,7 +1304,12 @@
     }
     window.ER365_ACTIVE_PAGE = pageOrUrl;
     window.location.hash = '#/AppPage/' + pageOrUrl;
-    setTimeout(refreshActiveState, 0);
+    setTimeout(function () {
+      refreshActiveState();
+      // v4.21: the explicit trail belonged to the page we just left
+      if (window.ER365_CRUMBS) window.ER365_CRUMBS = null;
+      renderCrumbs();
+    }, 0);
   }
 
   function refreshActiveState() {
@@ -1312,6 +1460,9 @@
     };
     window.ER365.reapplyGating = function () { applyGating(document); };
     window.ER365.refreshActive = refreshActiveState;
+    // v4.21 breadcrumb API
+    window.ER365.setCrumbs = function (crumbs) { window.ER365_CRUMBS = crumbs; renderCrumbs(); };
+    window.ER365.refreshCrumbs = function () { renderCrumbs(); };
   }
 
   // ---------------------------------------------------------
@@ -1390,3 +1541,4 @@
     boot();
   }
 })();
+
