@@ -1,4 +1,4 @@
-/* er365-fn-header.js  v2.8  (2026-09-11) */
+/* er365-fn-header.js  v2.9  (2026-09-11) */
 /**
  * ERISAReady365 - Fiduciary Navigator form-page header
  * ====================================================
@@ -22,6 +22,17 @@
  * IIFE below. Nothing else carries a version number.
  *
  * ----------------------------------------------------------------
+ * v2.9 (2026-09-11)
+ *   - Multi-select manager now reads its stored value from EITHER a
+ *     bound input OR the unbound _<Q_ID>_Repop calculated value.
+ *     Only a Caspio Calculated Value can read [@runtimefield:_Virtual_*],
+ *     so the Calc Value must stay as the thing that BUILDS the string.
+ *     A Hidden element cannot compute it - its Default value accepts
+ *     data-source / DataPart / query-string parameters only.
+ *   - Aggregation now attaches ONLY when a bound input is present.
+ *     With a Calc Value present, Caspio owns the forward direction and
+ *     the manager owns repopulation only.
+ *
  * v2.8 (2026-09-11)
  *   - Whole-file rewrite. v2.7 on GitHub had been overwritten with
  *     only the two patch snippets; the header render, the timeout
@@ -48,7 +59,7 @@
 (function () {
   'use strict';
 
-  var VERSION = '2.8';
+  var VERSION = '2.9';
 
   try {
     console.log('%c[ER365] FN Header v' + VERSION + ' loaded',
@@ -219,19 +230,33 @@
 
     var warned = {};
 
+    // The stored comma-wrapped string can come from either:
+    //   'input' - a bound form element (manager owns forward + back)
+    //   'repop' - the unbound _<Q_ID>_Repop calculated value
+    //             (Caspio's Calc Value owns forward; manager owns back)
+    function readStored(field) {
+      var input = findParentInput(field);
+      if (input) return { src: 'input', el: input, value: input.value || '' };
+      var rep = document.querySelector('[id^="_' + field + '_Repop"]');
+      if (rep) return { src: 'repop', el: rep,
+                        value: (rep.textContent || rep.value || '').trim() };
+      return null;
+    }
+
     function repopulate() {
       discoverFields().forEach(function (field) {
-        var parent = findParentInput(field);
-        if (!parent) {
+        var found = readStored(field);
+        if (!found) {
           if (!warned[field]) {
             warned[field] = true;
-            warn('no parent input for ' + field + ' - add ' + field +
-                 ' as a Hidden form element on this page');
+            warn('no value source for ' + field + ' - this page needs ' +
+                 'either ' + field + ' as a bound form element, or a ' +
+                 '_' + field + '_Repop calculated value');
           }
           return;
         }
-        var stored = parent.value || '';
-        log(field + ' stored="' + stored + '"');
+        var stored = found.value;
+        log(field + ' stored="' + stored + '" via ' + found.src);
         var v = virtualsFor(field);
         for (var i = 0; i < v.length; i++) {
           var id = optionIdOf(v[i]);
@@ -245,6 +270,9 @@
       });
     }
 
+    // Only attach when a bound input exists. If the page uses a Caspio
+    // Calculated Value, Caspio already owns the forward direction and a
+    // second writer would be a second source of truth.
     function attachAggregation() {
       discoverFields().forEach(function (field) {
         var parent = findParentInput(field);
